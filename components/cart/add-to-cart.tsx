@@ -1,11 +1,10 @@
 "use client";
 
-import { PlusIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
 import { addItem } from "components/cart/actions";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
+import { TbShoppingBagCheck } from "react-icons/tb";
 import { useCart } from "./cart-context";
 
 function SubmitButton({
@@ -15,29 +14,22 @@ function SubmitButton({
   availableForSale: boolean;
   selectedVariantId: string | undefined;
 }) {
-  const buttonClasses =
-    "relative flex w-full items-center justify-center rounded-full bg-blue-600 p-4 tracking-wide text-white";
-  const disabledClasses = "cursor-not-allowed opacity-60 hover:opacity-60";
-
   if (!availableForSale) {
     return (
-      <button disabled className={clsx(buttonClasses, disabledClasses)}>
-        Out Of Stock
-      </button>
+      <div className="w-full border-[0.25px] border-black items-center justify-center gap-x-2 flex flex-row font-mono py-4 bg-gray-100 text-gray-400 cursor-not-allowed">
+        <span className="text-xs">OUT OF STOCK</span>
+      </div>
     );
   }
 
   if (!selectedVariantId) {
     return (
       <button
-        aria-label="Please select an option"
         disabled
-        className={clsx(buttonClasses, disabledClasses)}
+        className="w-full border-[0.25px] border-black/40 items-center justify-center gap-x-2 flex flex-row font-mono py-4 opacity-60 cursor-not-allowed"
       >
-        <div className="absolute left-0 ml-4">
-          <PlusIcon className="h-5" />
-        </div>
-        Add To Cart
+        <TbShoppingBagCheck className="w-4 h-4" />
+        <span className="text-xs">SELECT SIZE</span>
       </button>
     );
   }
@@ -45,14 +37,10 @@ function SubmitButton({
   return (
     <button
       aria-label="Add to cart"
-      className={clsx(buttonClasses, {
-        "hover:opacity-90": true,
-      })}
+      className="w-full border-[0.25px] border-black items-center justify-center gap-x-2 flex flex-row font-mono py-4 hover:bg-black hover:text-white transition-colors"
     >
-      <div className="absolute left-0 ml-4">
-        <PlusIcon className="h-5" />
-      </div>
-      Add To Cart
+      <TbShoppingBagCheck className="w-4 h-4" />
+      <span className="text-xs">ADD TO CART</span>
     </button>
   );
 }
@@ -65,20 +53,22 @@ export function AddToCart({ product }: { product: Product }) {
 
   const variant = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every(
-      (option) => option.value === searchParams.get(option.name.toLowerCase()),
-    ),
+      (option) => option.value === searchParams.get(option.name.toLowerCase())
+    )
   );
   const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
   const selectedVariantId = variant?.id || defaultVariantId;
   const addItemAction = formAction.bind(null, selectedVariantId);
   const finalVariant = variants.find(
-    (variant) => variant.id === selectedVariantId,
+    (variant) => variant.id === selectedVariantId
   )!;
 
   return (
     <form
       action={async () => {
-        addCartItem(finalVariant, product);
+        if (finalVariant) {
+          addCartItem(finalVariant, product);
+        }
         addItemAction();
       }}
     >

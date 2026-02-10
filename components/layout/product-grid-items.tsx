@@ -13,7 +13,7 @@ export default function ProductGridItems({
       {products.map((product) => (
         <Grid.Item key={product.handle} className="animate-fadeIn">
           <Link
-            className="relative inline-block h-full w-full"
+            className="relative block h-full w-full"
             href={`/product/${product.handle}`}
             prefetch={true}
           >
@@ -21,12 +21,14 @@ export default function ProductGridItems({
               alt={product.title}
               label={{
                 title: product.title,
-                amount: product.priceRange.maxVariantPrice.amount,
-                currencyCode: product.priceRange.maxVariantPrice.currencyCode,
+                amount: product.priceRange.minVariantPrice.amount,
+                currencyCode: product.priceRange.minVariantPrice.currencyCode,
+                brand: product.vendor
               }}
-              src={product.featuredImage?.url}
+              src={product.featuredImage?.url || "/placeholder.png"}
               fill
-              sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+              hoverImage={product.images[1]?.url}
             />
           </Link>
         </Grid.Item>

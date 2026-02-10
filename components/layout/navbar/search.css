@@ -1,0 +1,13 @@
+.search-group > div,
+.search-group > button {
+  font-size: 14px;
+  padding: calc(var(--spacing, 8px) * 0.5);
+}
+
+[cmdk-item] {
+  padding-block: calc(var(--spacing, 8px) * 1);
+}
+
+[cmdk-item]:hover {
+  cursor: pointer;
+}

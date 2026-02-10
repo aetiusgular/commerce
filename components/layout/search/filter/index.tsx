@@ -1,6 +1,8 @@
+"use client";
+
 import { SortFilterItem } from "lib/constants";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import FilterItemDropdown from "./dropdown";
 import { FilterItem } from "./item";
 
 export type ListItem = SortFilterItem | PathFilterItem;
@@ -16,6 +18,35 @@ function FilterItemList({ list }: { list: ListItem[] }) {
   );
 }
 
+function FilterTitle({ title }: { title: string }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const handleReset = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (title.toLowerCase() === "categories") {
+      router.push("/shop");
+    } else if (title.toLowerCase() === "brands") {
+      params.delete("vendor");
+      router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`);
+    } else if (title.toLowerCase() === "colors") {
+      params.delete("color");
+      router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`);
+    }
+  };
+
+  return (
+    <h3 
+      className="hidden text-sm font-medium uppercase tracking-tight mb-4 md:block cursor-pointer hover:opacity-60 transition-opacity"
+      onClick={handleReset}
+    >
+      {title}
+    </h3>
+  );
+}
+
 export default function FilterList({
   list,
   title,
@@ -26,19 +57,10 @@ export default function FilterList({
   return (
     <>
       <nav>
-        {title ? (
-          <h3 className="hidden text-xs text-neutral-500 md:block dark:text-neutral-400">
-            {title}
-          </h3>
-        ) : null}
-        <ul className="hidden md:block">
+        {title ? <FilterTitle title={title} /> : null}
+        <ul className="hidden md:block space-y-2">
           <Suspense fallback={null}>
             <FilterItemList list={list} />
-          </Suspense>
-        </ul>
-        <ul className="md:hidden">
-          <Suspense fallback={null}>
-            <FilterItemDropdown list={list} />
           </Suspense>
         </ul>
       </nav>

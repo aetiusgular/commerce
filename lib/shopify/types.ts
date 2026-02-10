@@ -123,6 +123,7 @@ export type ShopifyProduct = {
   description: string;
   descriptionHtml: string;
   options: ProductOption[];
+  vendor: string;
   priceRange: {
     maxVariantPrice: Money;
     minVariantPrice: Money;
@@ -268,5 +269,31 @@ export type ShopifyProductsOperation = {
     query?: string;
     reverse?: boolean;
     sortKey?: string;
+  };
+};
+
+export type ShopMetafield = {
+  value: string;
+  type: string;
+  reference?: {
+    sources?: Array<{
+      url: string;
+      mimeType: string;
+    }>;
+    image?: {
+      url: string;
+    };
+  };
+};
+
+export type ShopMetafieldsOperation = {
+  data: {
+    shop: {
+      metafield: ShopMetafield | null;
+    };
+  };
+  variables: {
+    namespace: string;
+    key: string;
   };
 };

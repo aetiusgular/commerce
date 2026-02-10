@@ -1,6 +1,5 @@
 "use client";
 
-import clsx from "clsx";
 import { Menu } from "lib/shopify/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,12 +17,7 @@ export function FooterMenuItem({ item }: { item: Menu }) {
     <li>
       <Link
         href={item.path}
-        className={clsx(
-          "block p-2 text-lg underline-offset-4 hover:text-black hover:underline md:inline-block md:text-sm dark:hover:text-neutral-300",
-          {
-            "text-black dark:text-neutral-300": active,
-          },
-        )}
+        className="block hover:text-black transition-colors hover:underline hover:decoration-dashed underline-offset-2"
       >
         {item.title}
       </Link>
@@ -36,7 +30,7 @@ export default function FooterMenu({ menu }: { menu: Menu[] }) {
 
   return (
     <nav>
-      <ul>
+      <ul className="space-y-1 text-sm">
         {menu.map((item: Menu) => {
           return <FooterMenuItem key={item.title} item={item} />;
         })}

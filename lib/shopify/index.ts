@@ -149,7 +149,7 @@ const reshapeCollection = (
 
   return {
     ...collection,
-    path: `/search/${collection.handle}`,
+    path: `/shop/${collection.handle}`,
   };
 };
 
@@ -363,7 +363,7 @@ export async function getCollections(): Promise<Collection[]> {
           title: "All",
           description: "All products",
         },
-        path: "/search",
+        path: "/shop",
         updatedAt: new Date().toISOString(),
       },
     ];
@@ -382,7 +382,7 @@ export async function getCollections(): Promise<Collection[]> {
         title: "All",
         description: "All products",
       },
-      path: "/search",
+      path: "/shop",
       updatedAt: new Date().toISOString(),
     },
     // Filter out the `hidden` collections.
@@ -417,7 +417,7 @@ export async function getMenu(handle: string): Promise<Menu[]> {
       title: item.title,
       path: item.url
         .replace(domain, "")
-        .replace("/collections", "/search")
+        .replace("/collections", "/shop")
         .replace("/pages", ""),
     })) || []
   );
@@ -540,4 +540,72 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
+}
+
+
+// Add this with your other imports at the top
+import type { ShopMetafieldsOperation } from "./types";
+
+// Update the getShopMetafield function to handle file references
+export async function getShopMetafield(
+  namespace: string,
+  key: string
+): Promise<string | null> {
+  "use cache";
+  cacheLife("hours");
+
+  const query = /* GraphQL */ `
+    query getShopMetafield($namespace: String!, $key: String!) {
+      shop {
+        metafield(namespace: $namespace, key: $key) {
+          value
+          type
+          reference {
+            ... on MediaImage {
+              image {
+                url
+              }
+            }
+            ... on Video {
+              sources {
+                url
+                mimeType
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const res = await shopifyFetch<ShopMetafieldsOperation>({
+      query,
+      variables: { namespace, key },
+    });
+
+    const metafield = res.body.data.shop.metafield;
+    
+    if (!metafield) {
+      return null;
+    }
+
+    // If it's a file reference, get the URL from the reference
+    if (metafield.type === "file_reference" && metafield.reference) {
+      // Check if it's a video
+      if (metafield.reference.sources && metafield.reference.sources.length > 0 && metafield.reference.sources[0]) {
+        return metafield.reference.sources[0].url;
+    }
+      // Check if it's an image (fallback)
+      if (metafield.reference.image) {
+        return metafield.reference.image.url;
+      }
+    }
+
+    // Otherwise return the raw value
+    return metafield.value || null;
+  } catch (error) {
+    console.error('Error fetching shop metafield:', error);
+    return null;
+  }
 }

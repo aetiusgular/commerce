@@ -1,0 +1,84 @@
+"use client";
+
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import CartModal from "components/cart/modal";
+import { Menu } from "lib/shopify/types";
+import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import MobileMenu from "./mobile-menu";
+import { useNavbarStyles } from "./navbar-styles";
+import Search, { SearchSkeleton } from "./search";
+
+export function NavbarContent({ menu }: { menu: Menu[] }) {
+  const styles = useNavbarStyles();
+
+  return (
+    <>
+      {/* Mobile Navbar */}
+      <nav className={styles.mobile}>
+        {/* Left - Logo */}
+        <div className="flex items-center py-2">
+          <Link href="/" prefetch={true} className="flex items-center">
+            <Image
+              src="/images/AGMNT-logo-black.png"
+              alt="AGMNT"
+              width={130.5}
+              height={64.5}
+            />
+          </Link>
+        </div>
+
+        {/* Right - Icons */}
+        <div className="flex items-center justify-end gap-6 py-2">
+          {/* Search Icon - Opens Search Modal */}
+          <Suspense fallback={<MagnifyingGlassIcon className="w-8 h-8" />}>
+            <Search isMobile />
+          </Suspense>
+          
+          {/* Cart Icon - Opens Cart Modal */}
+          <CartModal isMobile />
+          
+          {/* Plus Icon - Opens Menu */}
+          <Suspense fallback={null}>
+            <MobileMenu menu={menu} />
+          </Suspense>
+        </div>
+      </nav>
+
+      {/* Desktop Navbar */}
+      <nav className={styles.desktop}>
+        {/* Left - SHOP */}
+        <div className="flex items-center">
+          <Link
+            href="/shop"
+            prefetch={true}
+            className="hover:underline"
+          >
+            SHOP
+          </Link>
+        </div>
+
+        {/* Center - Logo */}
+        <div className="flex items-center justify-center">
+          <Link href="/" prefetch={true}>
+            <Image
+              src="/images/AGMNT-logo-black.png"
+              alt="AGMNT"
+              width={118.5}
+              height={58.5}
+            />
+          </Link>
+        </div>
+
+        {/* Right - Search & Cart */}
+        <div className="flex items-center justify-end gap-6 [&>button]:text-sm [&>button]:hover:underline">
+          <Suspense fallback={<SearchSkeleton />}>
+            <Search />
+          </Suspense>
+          <CartModal />
+        </div>
+      </nav>
+    </>
+  );
+}

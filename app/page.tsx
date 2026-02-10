@@ -1,21 +1,28 @@
-import { Carousel } from "components/carousel";
-import { ThreeItemGrid } from "components/grid/three-items";
 import Footer from "components/layout/footer";
+import { getShopMetafield } from "lib/shopify";
 
-export const metadata = {
-  description:
-    "High-performance ecommerce store built with Next.js, Vercel, and Shopify.",
-  openGraph: {
-    type: "website",
-  },
-};
+export default async function Page() {
+  // Fetch the homepage video URL from Shopify metafield
+  const videoUrl = await getShopMetafield("custom", "homepage_video");
 
-export default function HomePage() {
+  // Fallback video if metafield is not set
+  const videoSrc = videoUrl || "/testmedia/home.mov";
+
   return (
-    <>
-      <ThreeItemGrid />
-      <Carousel />
+    <main className="flex flex-col w-full">
+      {/* Full-screen video section */}
+      <div className="relative w-full h-screen overflow-hidden">
+        <video
+          className="absolute top-0 left-0 w-full h-full object-cover"
+          src={videoSrc}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+        />
+      </div>
       <Footer />
-    </>
+    </main>
   );
 }
