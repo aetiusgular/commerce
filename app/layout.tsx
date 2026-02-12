@@ -35,7 +35,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={vremena.variable}>
-      <body className="bg-neutral-900 text-white selection:bg-pink-500 dark:bg-white dark:text-black dark:selection:bg-teal-300 dark:selection:text-black">
+      <body className="bg-white text-black selection:bg-pink-500 dark:bg-white dark:text-black dark:selection:bg-teal-300 dark:selection:text-black">
         <CartProvider cartPromise={cart}>
           <Navbar />
           <main>
