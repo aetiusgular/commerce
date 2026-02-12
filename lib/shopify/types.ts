@@ -275,15 +275,6 @@ export type ShopifyProductsOperation = {
 export type ShopMetafield = {
   value: string;
   type: string;
-  reference?: {
-    sources?: Array<{
-      url: string;
-      mimeType: string;
-    }>;
-    image?: {
-      url: string;
-    };
-  };
 };
 
 export type ShopMetafieldsOperation = {

@@ -546,7 +546,6 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
 // Add this with your other imports at the top
 import type { ShopMetafieldsOperation } from "./types";
 
-// Update the getShopMetafield function to handle file references
 export async function getShopMetafield(
   namespace: string,
   key: string
@@ -560,19 +559,6 @@ export async function getShopMetafield(
         metafield(namespace: $namespace, key: $key) {
           value
           type
-          reference {
-            ... on MediaImage {
-              image {
-                url
-              }
-            }
-            ... on Video {
-              sources {
-                url
-                mimeType
-              }
-            }
-          }
         }
       }
     }
@@ -585,24 +571,7 @@ export async function getShopMetafield(
     });
 
     const metafield = res.body.data.shop.metafield;
-    
-    if (!metafield) {
-      return null;
-    }
-
-    // If it's a file reference, get the URL from the reference
-    if (metafield.type === "file_reference" && metafield.reference) {
-      // Check if it's a video
-      if (metafield.reference.sources && metafield.reference.sources.length > 0 && metafield.reference.sources[0]) {
-        return metafield.reference.sources[0].url;
-    }
-      // Check if it's an image (fallback)
-      if (metafield.reference.image) {
-        return metafield.reference.image.url;
-      }
-    }
-
-    // Otherwise return the raw value
+    if (!metafield) return null;
     return metafield.value || null;
   } catch (error) {
     console.error('Error fetching shop metafield:', error);
