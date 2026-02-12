@@ -97,7 +97,17 @@ export async function updateItemQuantity(
 
 export async function redirectToCheckout() {
   let cart = await getCart();
-  redirect(cart!.checkoutUrl);
+  
+  if (!cart?.checkoutUrl) return;
+
+  // Shopify returns your custom domain in the checkout URL
+  // Replace it with your actual myshopify.com domain
+  const checkoutUrl = cart.checkoutUrl.replace(
+    "https://agmnt.space",
+    `https://${process.env.SHOPIFY_STORE_DOMAIN!.replace("https://", "")}`
+  );
+
+  redirect(checkoutUrl);
 }
 
 export async function createCartAndSetCookie() {
