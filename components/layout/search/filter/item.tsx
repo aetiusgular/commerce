@@ -12,7 +12,7 @@ function PathFilterItem({ item }: { item: PathFilterItem }) {
   const searchParams = useSearchParams();
 
   // Separate the item's pathname from its query params
-  const [itemPathname, itemSearch] = item.path.split('?');
+  const [itemPathname = '', itemSearch] = item.path.split('?');
   const itemParams = new URLSearchParams(itemSearch || '');
 
   // Build new params: start from current search params, then override with item's params
