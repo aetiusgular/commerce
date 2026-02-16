@@ -24,18 +24,26 @@ async function CollectionList() {
     path: `/shop?vendor=${encodeURIComponent(brand)}`
   }));
   
-  // Extract unique colors from product tags
-  const colorsSet = new Set<string>();
+  // Extract unique colors from product tags (case-insensitive deduplication)
+  const colorsMap = new Map<string, string>();
   products.forEach(product => {
     product.tags.forEach(tag => {
+      let colorName: string | null = null;
       if (tag.toLowerCase().startsWith('color:')) {
-        colorsSet.add(tag.replace(/^color:/i, '').trim());
+        colorName = tag.replace(/^color:/i, '').trim();
       } else if (['black', 'grey', 'gray', 'white', 'ivory', 'brown', 'beige', 'silver', 'red', 'blue', 'green', 'yellow', 'pink', 'purple', 'orange'].includes(tag.toLowerCase())) {
-        colorsSet.add(tag);
+        colorName = tag;
+      }
+      if (colorName) {
+        const key = colorName.toLowerCase();
+        // Keep the capitalized version (e.g., "Black" over "black")
+        if (!colorsMap.has(key) || colorName[0] === colorName[0]?.toUpperCase()) {
+          colorsMap.set(key, colorName);
+        }
       }
     });
   });
-  const colors = Array.from(colorsSet).sort().map(color => ({
+  const colors = Array.from(colorsMap.values()).sort().map(color => ({
     title: color,
     path: `/shop?color=${encodeURIComponent(color)}`
   }));
