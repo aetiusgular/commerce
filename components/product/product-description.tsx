@@ -52,7 +52,7 @@ export function ProductDescription({ product }: { product: Product }) {
         <div className="flex flex-col gap-y-1 text-justify max-w-prose pb-2">
           {product.descriptionHtml ? (
             <div
-              className="w-full text-sm font-vremena break-words leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:ml-4 [&>li]:mb-1"
+              className="pt-1 w-full text-sm font-vremena break-words leading-relaxed [&>p]:mb-2 [&>ul]:list-disc [&>ul]:ml-4 [&>li]:mb-1"
               dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
             />
           ) : product.description ? (
