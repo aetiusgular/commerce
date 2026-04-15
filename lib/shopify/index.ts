@@ -32,6 +32,13 @@ import {
   getProductsQuery,
 } from "./queries/product";
 import {
+  getArticleQuery,
+  getBlogArticlesQuery,
+  getBlogsQuery,
+} from "./queries/blog";
+import {
+  Article,
+  Blog,
   Cart,
   Collection,
   Connection,
@@ -40,6 +47,10 @@ import {
   Page,
   Product,
   ShopifyAddToCartOperation,
+  ShopifyArticle,
+  ShopifyArticleOperation,
+  ShopifyBlogArticlesOperation,
+  ShopifyBlogsOperation,
   ShopifyCart,
   ShopifyCartOperation,
   ShopifyCollection,
@@ -56,6 +67,7 @@ import {
   ShopifyProductsOperation,
   ShopifyRemoveFromCartOperation,
   ShopifyUpdateCartOperation,
+  ShopMetafieldsOperation,
 } from "./types";
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -543,9 +555,6 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
 }
 
 
-// Add this with your other imports at the top
-import type { ShopMetafieldsOperation } from "./types";
-
 export async function getShopMetafield(
   namespace: string,
   key: string
@@ -577,4 +586,82 @@ export async function getShopMetafield(
     console.error('Error fetching shop metafield:', error);
     return null;
   }
+}
+
+const reshapeArticle = (article: ShopifyArticle): Article => ({
+  id: article.id,
+  title: article.title,
+  handle: article.handle,
+  publishedAt: article.publishedAt,
+  excerpt: article.excerpt,
+  contentHtml: article.contentHtml,
+  image: article.image ?? null,
+  author: { name: article.authorV2?.name || "" },
+  tags: article.tags,
+  blog: { handle: article.blog.handle, title: article.blog.title },
+});
+
+export async function getBlogs(): Promise<Blog[]> {
+  "use cache";
+  cacheTag(TAGS.articles);
+  cacheLife("days");
+
+  if (!endpoint) return [];
+
+  const res = await shopifyFetch<ShopifyBlogsOperation>({
+    query: getBlogsQuery,
+  });
+
+  return removeEdgesAndNodes(res.body.data.blogs);
+}
+
+// Fetches all articles across every blog, sorted newest-first.
+export async function getArticles(): Promise<Article[]> {
+  "use cache";
+  cacheTag(TAGS.articles);
+  cacheLife("hours");
+
+  if (!endpoint) return [];
+
+  const blogs = await getBlogs();
+
+  const perBlog = await Promise.all(
+    blogs.map(async (blog) => {
+      const res = await shopifyFetch<ShopifyBlogArticlesOperation>({
+        query: getBlogArticlesQuery,
+        variables: { blogHandle: blog.handle },
+      });
+      if (!res.body.data.blog) return [];
+      return removeEdgesAndNodes(res.body.data.blog.articles).map(reshapeArticle);
+    })
+  );
+
+  return perBlog
+    .flat()
+    .sort(
+      (a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    );
+}
+
+// Finds a single article by its handle, searching across all blogs.
+export async function getArticle(articleHandle: string): Promise<Article | undefined> {
+  "use cache";
+  cacheTag(TAGS.articles);
+  cacheLife("hours");
+
+  if (!endpoint) return undefined;
+
+  const blogs = await getBlogs();
+
+  for (const blog of blogs) {
+    const res = await shopifyFetch<ShopifyArticleOperation>({
+      query: getArticleQuery,
+      variables: { blogHandle: blog.handle, articleHandle },
+    });
+    const article = res.body.data.blog?.articleByHandle;
+    if (article) return reshapeArticle(article);
+  }
+
+  return undefined;
 }

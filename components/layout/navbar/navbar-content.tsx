@@ -48,14 +48,13 @@ export function NavbarContent({ menu }: { menu: Menu[] }) {
 
       {/* Desktop Navbar */}
       <nav className={styles.desktop}>
-        {/* Left - SHOP */}
-        <div className="flex items-center">
-          <Link
-            href="/shop"
-            prefetch={true}
-            className="hover:underline"
-          >
+        {/* Left - SHOP + INSTALLATIONS */}
+        <div className="flex items-center gap-6">
+          <Link href="/shop" prefetch={true} className="hover:underline">
             SHOP
+          </Link>
+          <Link href="/installations" prefetch={true} className="hover:underline">
+            INSTALLATIONS
           </Link>
         </div>
 

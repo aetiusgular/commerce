@@ -272,6 +272,73 @@ export type ShopifyProductsOperation = {
   };
 };
 
+export type Article = {
+  id: string;
+  title: string;
+  handle: string;
+  publishedAt: string;
+  excerpt: string;
+  contentHtml: string;
+  image: Image | null;
+  author: { name: string };
+  tags: string[];
+  blog: { handle: string; title: string };
+};
+
+export type Blog = {
+  id: string;
+  handle: string;
+  title: string;
+};
+
+export type ShopifyArticle = {
+  id: string;
+  title: string;
+  handle: string;
+  publishedAt: string;
+  excerpt: string;
+  contentHtml: string;
+  image: Image | null;
+  authorV2: { name: string };
+  tags: string[];
+  blog: { handle: string; title: string };
+};
+
+export type ShopifyBlog = {
+  id: string;
+  handle: string;
+  title: string;
+};
+
+export type ShopifyBlogArticlesOperation = {
+  data: {
+    blog: {
+      articles: Connection<ShopifyArticle>;
+    } | null;
+  };
+  variables: {
+    blogHandle: string;
+  };
+};
+
+export type ShopifyArticleOperation = {
+  data: {
+    blog: {
+      articleByHandle: ShopifyArticle | null;
+    } | null;
+  };
+  variables: {
+    blogHandle: string;
+    articleHandle: string;
+  };
+};
+
+export type ShopifyBlogsOperation = {
+  data: {
+    blogs: Connection<ShopifyBlog>;
+  };
+};
+
 export type ShopMetafield = {
   value: string;
   type: string;
