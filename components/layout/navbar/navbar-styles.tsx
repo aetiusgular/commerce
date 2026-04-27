@@ -7,11 +7,11 @@ export function useNavbarStyles() {
   const isHome = pathname === "/";
 
   return {
-    mobile: isHome 
-      ? "grid grid-cols-2 w-full h-max text-black text-xl font-vremena tracking-tight px-2 md:hidden bg-transparent border-0"
-      : "grid grid-cols-2 w-full h-max text-black text-xl font-vremena tracking-tight px-2 md:hidden bg-white border-[0.25px] border-black",
+    mobile: isHome
+      ? "grid grid-cols-2 w-full h-max text-black text-xl font-vremena tracking-tight px-2 lg:hidden bg-white/55 backdrop-blur-[18px] backdrop-saturate-150 supports-[backdrop-filter]:bg-white/55 border-b border-black/10"
+      : "grid grid-cols-2 w-full h-max text-black text-xl font-vremena tracking-tight px-2 lg:hidden bg-white border-[0.25px] border-black",
     desktop: isHome
-      ? "hidden md:grid grid-cols-3 w-full h-max text-black font-vremena tracking-tight py-0.5 px-6 [&>a]:text-sm [&>button]:text-sm bg-transparent border-b-0"
-      : "hidden md:grid grid-cols-3 w-full h-max text-black font-vremena tracking-tight py-0.5 px-6 [&>a]:text-sm [&>button]:text-sm bg-white border-b-[0.25px] border-black/10"
+      ? "hidden lg:grid grid-cols-3 w-full h-max text-black font-vremena tracking-tight py-0.5 px-6 [&>a]:text-sm [&>button]:text-sm bg-white/55 backdrop-blur-[18px] backdrop-saturate-150 supports-[backdrop-filter]:bg-white/55 border-b border-black/10"
+      : "hidden lg:grid grid-cols-3 w-full h-max text-black font-vremena tracking-tight py-0.5 px-6 [&>a]:text-sm [&>button]:text-sm bg-white border-b-[0.25px] border-black/10",
   };
 }
