@@ -15,25 +15,25 @@ export default function VideoBackground({ videoUrl }: { videoUrl: string }) {
     video.playsInline = true;
     video.autoplay = true;
 
-    const attemptPlay = () => {
-      setIsLoaded(true);
-      video.play().catch((err) => {
-        console.error("Play failed:", err);
-      });
-    };
+    // `playing` fires AFTER the first frame is actually painted on screen.
+    // Using `canplay` (which only means "enough buffered to start") would
+    // reveal the <video> a few ms before any frame is rendered, leaking the
+    // parent's black background through and producing the perceived flash.
+    const reveal = () => setIsLoaded(true);
 
-    // Multiple event listeners to catch different mobile behaviors
-    video.addEventListener("loadedmetadata", attemptPlay);
-    video.addEventListener("canplay", attemptPlay);
-    video.addEventListener("canplaythrough", attemptPlay);
+    video.play().catch(() => {
+      // Autoplay rejection is expected on some mobile browsers; user gesture
+      // or visibility change will trigger it later.
+    });
 
-    // Force load
-    video.load();
+    if (!video.paused && video.readyState >= 3) {
+      reveal();
+    } else {
+      video.addEventListener("playing", reveal, { once: true });
+    }
 
     return () => {
-      video.removeEventListener("loadedmetadata", attemptPlay);
-      video.removeEventListener("canplay", attemptPlay);
-      video.removeEventListener("canplaythrough", attemptPlay);
+      video.removeEventListener("playing", reveal);
     };
   }, [videoUrl]);
 
@@ -41,8 +41,12 @@ export default function VideoBackground({ videoUrl }: { videoUrl: string }) {
     <div className="absolute inset-0 w-full h-full bg-black">
       <video
         ref={videoRef}
-        className={`w-full h-full object-cover transition-opacity duration-700 ${
-          isLoaded ? "opacity-100" : "opacity-0"
+        // No opacity transition: a 0→100 fade reads as a flash because the
+        // black parent shows through during the in-between values. Hard
+        // visibility toggle means the video appears in the same frame the
+        // browser has just painted.
+        className={`w-full h-full object-cover ${
+          isLoaded ? "visible" : "invisible"
         }`}
         autoPlay
         loop

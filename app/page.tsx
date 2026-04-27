@@ -1,7 +1,6 @@
 import { Dispatch } from "components/home/dispatch";
-import { HeroOverlay } from "components/home/hero-overlay";
+import { Preloader } from "components/home/preloader";
 import { ShopSection } from "components/home/shop-section";
-import VideoBackground from "components/home/video-background";
 import Footer from "components/layout/footer";
 import { getShopMetafield } from "lib/shopify";
 import Script from "next/script";
@@ -10,24 +9,25 @@ import { Suspense } from "react";
 export const revalidate = 3600;
 
 export default async function Page() {
+  // Re-fetched here (cached, near-free) so we can emit a preload hint on first
+  // page load. The actual <video> element lives in <PersistentHero> in the
+  // root layout — this just kicks off the byte fetch during initial HTML
+  // parse so the file is already in cache when the hero mounts.
   const videoUrl = await getShopMetafield("custom", "homepage_video");
 
   return (
-    <main className="flex flex-col w-full">
+    <>
+      {/* ➀ Brand preloader — masks first-load latency, runs once per session. */}
+      <Preloader />
+
+      {videoUrl && <link rel="preload" as="video" href={videoUrl} />}
+
       {/* Pull the SoundCloud Widget API in parallel with hydration so the
           radio component finds it already loaded when its useEffect runs. */}
       <Script
         src="https://w.soundcloud.com/player/api.js"
         strategy="afterInteractive"
       />
-      {/* ➀ Hero — Spring/Summer 2026 video campaign */}
-      <section
-        id="campaign"
-        className="relative w-full h-screen overflow-hidden bg-black"
-      >
-        {videoUrl && <VideoBackground videoUrl={videoUrl} />}
-        <HeroOverlay />
-      </section>
 
       {/* ➁ Shop */}
       <Suspense fallback={null}>
@@ -39,13 +39,13 @@ export default async function Page() {
         <Dispatch />
       </Suspense>
 
-      {/* ➃ Lookbook 
+      {/* ➃ Lookbook
       <Suspense fallback={null}>
         <Lookbook />
       </Suspense>
       */}
 
       <Footer />
-    </main>
+    </>
   );
 }
