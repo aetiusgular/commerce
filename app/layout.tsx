@@ -35,6 +35,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={vremena.variable}>
+      <head>
+        {/* Warm DNS+TLS for the SoundCloud radio iframe + widget API so the
+            handshake doesn't block first-paint of the radio section. */}
+        <link rel="preconnect" href="https://w.soundcloud.com" />
+        <link rel="preconnect" href="https://api.soundcloud.com" />
+        <link rel="dns-prefetch" href="https://i1.sndcdn.com" />
+      </head>
       <body className="bg-white text-black selection:bg-pink-500 dark:bg-white dark:text-black dark:selection:bg-teal-300 dark:selection:text-black">
         <CartProvider cartPromise={cart}>
           <Navbar />

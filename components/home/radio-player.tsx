@@ -245,12 +245,17 @@ export function RadioPlayer() {
 
   return (
     <aside className="flex flex-col border border-black/15 p-5 font-vremena tracking-[-0.02em] bg-white">
-      {/* Hidden iframe drives the SC Widget API */}
+      {/* Hidden iframe drives the SC Widget API. eager + high fetchPriority
+          tell the browser to start fetching the SC player on first paint
+          rather than treating it as a low-priority below-the-fold resource. */}
       <iframe
         ref={iframeRef}
         title="AGMNT Radio Player"
         className="hidden"
         allow="autoplay"
+        loading="eager"
+        // @ts-expect-error fetchPriority isn't typed on iframe in some React versions
+        fetchPriority="high"
         src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(PLAYLIST_URL)}&auto_play=false&visual=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false`}
       />
 

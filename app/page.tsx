@@ -4,6 +4,7 @@ import { ShopSection } from "components/home/shop-section";
 import VideoBackground from "components/home/video-background";
 import Footer from "components/layout/footer";
 import { getShopMetafield } from "lib/shopify";
+import Script from "next/script";
 import { Suspense } from "react";
 
 export const revalidate = 3600;
@@ -13,6 +14,12 @@ export default async function Page() {
 
   return (
     <main className="flex flex-col w-full">
+      {/* Pull the SoundCloud Widget API in parallel with hydration so the
+          radio component finds it already loaded when its useEffect runs. */}
+      <Script
+        src="https://w.soundcloud.com/player/api.js"
+        strategy="afterInteractive"
+      />
       {/* ➀ Hero — Spring/Summer 2026 video campaign */}
       <section
         id="campaign"
