@@ -10,6 +10,15 @@ const productFragment = /* GraphQL */ `
     description
     descriptionHtml
     vendor
+    productType
+    collections(first: 20) {
+      edges {
+        node {
+          handle
+          title
+        }
+      }
+    }
     options {
       id
       name
@@ -25,6 +34,32 @@ const productFragment = /* GraphQL */ `
         currencyCode
       }
     }
+    compareAtPriceRange {
+      maxVariantPrice {
+        amount
+        currencyCode
+      }
+      minVariantPrice {
+        amount
+        currencyCode
+      }
+    }
+    measurements: metafield(namespace: "custom", key: "measurements") {
+      value
+      type
+    }
+    details: metafield(namespace: "custom", key: "details") {
+      value
+      type
+    }
+    sizeFit: metafield(namespace: "custom", key: "sizing") {
+      value
+      type
+    }
+    materials: metafield(namespace: "custom", key: "materials") {
+      value
+      type
+    }
     variants(first: 250) {
       edges {
         node {
@@ -36,6 +71,10 @@ const productFragment = /* GraphQL */ `
             value
           }
           price {
+            amount
+            currencyCode
+          }
+          compareAtPrice {
             amount
             currencyCode
           }

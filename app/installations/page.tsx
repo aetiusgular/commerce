@@ -3,25 +3,38 @@ import type { Metadata } from "next";
 import { ArticleGrid } from "./article-grid";
 
 export const metadata: Metadata = {
-  title: "Installations",
-  description: "AGMNT installations and editorial features.",
+  title: "Editorial",
+  description:
+    "AGMNT editorial journal — interviews, essays, and installations.",
 };
 
 export default async function InstallationsPage() {
   const articles = await getArticles();
 
-  // Derive unique blogs from the article list (preserves order of first appearance).
-  const blogsMap = new Map<string, { handle: string; title: string }>();
-  for (const article of articles) {
-    if (!blogsMap.has(article.blog.handle)) {
-      blogsMap.set(article.blog.handle, article.blog);
-    }
+  // Category = article.category (custom.category metafield / first tag),
+  // falling back to the Shopify blog title. Counts feed the toolbar tabs.
+  const catOf = (a: (typeof articles)[number]) => a.category || a.blog.title;
+
+  const counts = new Map<string, number>();
+  for (const a of articles) {
+    const c = catOf(a);
+    counts.set(c, (counts.get(c) ?? 0) + 1);
   }
-  const blogs = Array.from(blogsMap.values());
+  const categories = [...counts.entries()].map(([label, count]) => ({
+    key: label,
+    label,
+    count,
+  }));
+
+  const contributors = [
+    ...new Set(articles.map((a) => a.author.name).filter(Boolean)),
+  ].sort();
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 pt-8 pb-4">
-      <ArticleGrid articles={articles} blogs={blogs} />
-    </div>
+    <ArticleGrid
+      articles={articles}
+      categories={categories}
+      contributors={contributors}
+    />
   );
 }

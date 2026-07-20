@@ -6,8 +6,8 @@ export default function InstallationsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <div className="flex-1">{children}</div>
+    <div className="agmnt-editorial flex min-h-screen flex-col">
+      <div className="ed-wrap flex-1">{children}</div>
       <Footer />
     </div>
   );

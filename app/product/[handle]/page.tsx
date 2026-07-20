@@ -1,9 +1,9 @@
+import { ProductViewTracker } from "components/analytics/product-view-tracker";
 import Footer from "components/layout/footer";
-import { Gallery } from "components/product/gallery";
-import { ProductDescription } from "components/product/product-description";
+import { ProductGallery } from "components/product/product-gallery";
+import { ProductPanel } from "components/product/product-panel";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
-import { getProduct } from "lib/shopify";
-import type { Image } from "lib/shopify/types";
+import { getProduct, getProductRecommendations } from "lib/shopify";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -78,34 +78,83 @@ export default async function ProductPage(props: {
           __html: JSON.stringify(productJsonLd),
         }}
       />
-      <div className="flex flex-col w-full min-h-screen">
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          {/* Left - Gallery */}
-          <div className="h-[97.5vh]">
-            <Suspense
-              fallback={
-                <div className="relative h-full w-full overflow-hidden bg-gray-100" />
-              }
-            >
-              <Gallery
-                images={product.images.map((image: Image) => ({
-                  src: image.url,
-                  altText: image.altText,
-                }))}
-              />
-            </Suspense>
-          </div>
+      <ProductViewTracker
+        id={product.id}
+        title={product.title}
+        value={parseFloat(product.priceRange.minVariantPrice.amount)}
+        currency={product.priceRange.minVariantPrice.currencyCode}
+      />
+      <div className="agmnt-pdp flex min-h-screen w-full flex-col">
+        <nav className="pdp-crumb">
+          <a href="/shop">Shop</a>
+          {product.productType && (
+            <>
+              <span className="sep">/</span>
+              <span>{product.productType}</span>
+            </>
+          )}
+          <span className="sep">/</span>
+          <span className="here">{product.title}</span>
+        </nav>
 
-          {/* Right - Product Info */}
-          <div className="p-10">
-            <Suspense fallback={null}>
-              <ProductDescription product={product} />
-            </Suspense>
-          </div>
+        <div className="pdp2">
+          <ProductGallery
+            images={product.images.map((image) => ({
+              url: image.url,
+              altText: image.altText,
+            }))}
+            lastPair={product.tags?.some(
+              (t) => t.toLowerCase() === "last pair",
+            )}
+          />
+          <ProductPanel product={product} />
         </div>
-        <div className="pb-24" />
+
+        <Suspense fallback={null}>
+          <RelatedProducts id={product.id} />
+        </Suspense>
+
         <Footer />
       </div>
     </>
+  );
+}
+
+async function RelatedProducts({ id }: { id: string }) {
+  const related = await getProductRecommendations(id);
+  if (!related.length) return null;
+
+  return (
+    <section className="pdp-recs">
+      <div className="pdp-recs-head">
+        <a href="/shop">All of the shop →</a>
+      </div>
+      <div className="pdp-recs-grid">
+        {related.slice(0, 4).map((p, i) => (
+          <a key={p.handle} href={`/product/${p.handle}`} className="pdp-rec">
+            <div className="pdp-rec-img">
+              {p.featuredImage?.url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.featuredImage.url}
+                  alt={p.featuredImage.altText || p.title}
+                />
+              )}
+            </div>
+            <div className="pdp-rec-meta">
+              {String(i + 1).padStart(2, "0")}
+              {p.productType ? ` / ${p.productType}` : ""}
+            </div>
+            <div className="pdp-rec-name">
+              {p.vendor} <em>— {p.title}</em>
+            </div>
+            <div className="pdp-rec-price agmnt-tnum">
+              {parseFloat(p.priceRange.minVariantPrice.amount).toFixed(0)}{" "}
+              {p.priceRange.minVariantPrice.currencyCode}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
   );
 }

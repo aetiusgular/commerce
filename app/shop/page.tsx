@@ -1,54 +1,131 @@
-import Grid from "components/grid";
-import ProductGridItems from "components/layout/product-grid-items";
-import { defaultSort, sorting } from "lib/constants";
+import { ShopCard } from "components/shop/shop-card";
+import { ShopFilters, type Facets } from "components/shop/shop-filters";
 import { getProducts } from "lib/shopify";
+import type { Product } from "lib/shopify/types";
+import { isOnSale } from "lib/utils";
 
 export const metadata = {
   title: "Shop",
   description: "Shop for products in the store.",
 };
 
+// Categories = Shopify collections (minus system/hidden ones).
+const HIDDEN_COLLECTIONS = ["frontpage", "all"];
+const categoriesOf = (p: Product): string[] =>
+  (p.collections ?? [])
+    .filter(
+      (c) =>
+        !HIDDEN_COLLECTIONS.includes(c.handle) &&
+        !c.handle.startsWith("hidden"),
+    )
+    .map((c) => c.title);
+
+// Colors = tags. Either a "color:Grey" prefixed tag or a plain named color.
+const KNOWN_COLORS = new Set([
+  "black",
+  "grey",
+  "gray",
+  "white",
+  "ivory",
+  "cream",
+  "brown",
+  "beige",
+  "tan",
+  "khaki",
+  "olive",
+  "stone",
+  "sand",
+  "charcoal",
+  "silver",
+  "navy",
+  "blue",
+  "green",
+  "red",
+  "burgundy",
+  "yellow",
+  "orange",
+  "pink",
+  "purple",
+  "ecru",
+]);
+const colorOf = (p: Product): string[] => {
+  const out: string[] = [];
+  for (const tag of p.tags ?? []) {
+    if (/^colou?r:/i.test(tag)) out.push(tag.replace(/^colou?r:/i, "").trim());
+    else if (KNOWN_COLORS.has(tag.toLowerCase())) out.push(tag);
+  }
+  return out;
+};
+
+const productIsOnSale = (p: Product) =>
+  isOnSale(
+    p.compareAtPriceRange?.minVariantPrice,
+    p.priceRange.minVariantPrice,
+  );
+
+const priceNum = (p: Product) =>
+  parseFloat(p.priceRange.minVariantPrice.amount);
+
 export default async function ShopPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const searchParams = await props.searchParams;
-  const { sort, q: searchValue, vendor, color } = searchParams as { [key: string]: string };
-  const { sortKey, reverse } =
-    sorting.find((item) => item.slug === sort) || defaultSort;
+  const sp = (await props.searchParams) as { [key: string]: string };
+  const { type, vendor, color, sort, sale, q } = sp;
 
-  // Build query with filters
-  let query = searchValue || "";
-  if (vendor) {
-    query += ` vendor:${vendor}`;
-  }
-  if (color) {
-    query += ` tag:${color}`;
-  }
+  // Fetch everything once; derive facets and filter/sort in-process so the
+  // three rails stay in sync and the counts are exact.
+  const all = await getProducts({});
 
-  const products = await getProducts({ sortKey, reverse, query: query.trim() || undefined });
-  const resultsText = products.length > 1 ? "results" : "result";
+  const facets: Facets = {
+    categories: [...new Set(all.flatMap(categoriesOf))].sort(),
+    designers: [...new Set(all.map((p) => p.vendor).filter(Boolean))].sort(),
+    colors: [...new Set(all.flatMap(colorOf))].sort(),
+  };
+
+  let list = all.filter((p) => {
+    if (sale === "1" && !productIsOnSale(p)) return false;
+    if (type && !categoriesOf(p).includes(type)) return false;
+    if (vendor && p.vendor !== vendor) return false;
+    if (color && !colorOf(p).includes(color)) return false;
+    if (q) {
+      const hay = `${p.vendor} ${p.title}`.toLowerCase();
+      if (!hay.includes(q.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  if (sort === "price-asc")
+    list = [...list].sort((a, b) => priceNum(a) - priceNum(b));
+  else if (sort === "price-desc")
+    list = [...list].sort((a, b) => priceNum(b) - priceNum(a));
+  else if (sort === "latest-desc") list = [...list].reverse();
+  // trending / relevance keep Shopify's returned order.
+
+  const dirty = Boolean(type || vendor || color || sort || sale || q);
 
   return (
     <>
-      {/* Only show message if searching OR no products found */}
-      {(searchValue || products.length === 0) ? (
-        <p className="mb-4 font-vremena text-sm">
-          {products.length === 0
-            ? "There are no products that match"
-            : `Showing ${products.length} ${resultsText}`}
-          {searchValue && (
-            <>
-              {" for "}
-              <span className="font-bold">&quot;{searchValue}&quot;</span>
-            </>
-          )}
-        </p>
-      ) : null}
-      {products.length > 0 ? (
-        <Grid className="grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <ProductGridItems products={products} />
-        </Grid>
-      ) : null}
+      <ShopFilters facets={facets} resultCount={list.length}>
+        <div className="slist-head">
+          <span className="agmnt-tnum">
+            {list.length} {list.length === 1 ? "piece" : "pieces"} shown
+          </span>
+          {dirty && <a href="/shop">Clear all ✕</a>}
+        </div>
+
+        {list.length > 0 ? (
+          <div className="slist">
+            {list.map((p, i) => (
+              <ShopCard key={p.handle} product={p} index={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="slist-empty">
+            <p>No pieces match your filters.</p>
+            <a href="/shop">Clear all filters →</a>
+          </div>
+        )}
+      </ShopFilters>
     </>
   );
 }
