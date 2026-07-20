@@ -17,6 +17,9 @@ export type CartProduct = {
   handle: string;
   title: string;
   featuredImage: Image;
+  // Also fetched via the full product fragment on cart lines.
+  vendor?: string;
+  tags?: string[];
 };
 
 export type CartItem = {
@@ -68,9 +71,13 @@ export type Page = {
   updatedAt: string;
 };
 
-export type Product = Omit<ShopifyProduct, "variants" | "images"> & {
+export type Product = Omit<
+  ShopifyProduct,
+  "variants" | "images" | "collections"
+> & {
   variants: ProductVariant[];
   images: Image[];
+  collections: { handle: string; title: string }[];
 };
 
 export type ProductOption = {
@@ -88,7 +95,17 @@ export type ProductVariant = {
     value: string;
   }[];
   price: Money;
+  /** Shopify "Compare-at price". Present (and higher than `price`) when on sale. */
+  compareAtPrice: Money | null;
+  /** Inventory remaining for the variant, when the store exposes it. */
+  quantityAvailable?: number | null;
 };
+
+/** Raw Shopify metafield as returned by the Storefront API. */
+export type ShopifyMetafield = {
+  value: string;
+  type: string;
+} | null;
 
 export type SEO = {
   title: string;
@@ -124,10 +141,28 @@ export type ShopifyProduct = {
   descriptionHtml: string;
   options: ProductOption[];
   vendor: string;
+  productType: string;
+  collections: Connection<{ handle: string; title: string }>;
   priceRange: {
     maxVariantPrice: Money;
     minVariantPrice: Money;
   };
+  /**
+   * Shopify "Compare-at price" range. Amounts are "0.0" when the product is not
+   * on sale, so always compare against `priceRange` before rendering a discount.
+   */
+  compareAtPriceRange: {
+    maxVariantPrice: Money;
+    minVariantPrice: Money;
+  };
+  /** Per-product `custom.measurements` metafield. Null when unset. */
+  measurements: ShopifyMetafield;
+  /** `custom.details` — JSON label→value pairs for the Description spec table. */
+  details: ShopifyMetafield;
+  /** `custom.size_fit` — text/HTML for the Size & Fit accordion. */
+  sizeFit: ShopifyMetafield;
+  /** `custom.materials` — JSON or text for the Materials & Care accordion. */
+  materials: ShopifyMetafield;
   variants: Connection<ProductVariant>;
   featuredImage: Image;
   images: Connection<Image>;
@@ -280,7 +315,15 @@ export type Article = {
   excerpt: string;
   contentHtml: string;
   image: Image | null;
-  author: { name: string };
+  author: { name: string; role: string | null };
+  /** Editorial kicker, e.g. "Interview" / "Essay". From metafield or first tag. */
+  category: string | null;
+  /** Photography credit, e.g. "Studio AGMNT". */
+  photography: string | null;
+  /** Read-time label, e.g. "12 min read". */
+  readTime: string | null;
+  /** Extra images beyond the hero, for the reference two-up / breakout layout. */
+  gallery: Image[];
   tags: string[];
   blog: { handle: string; title: string };
 };
@@ -290,6 +333,8 @@ export type Blog = {
   handle: string;
   title: string;
 };
+
+type ShopifyMetafieldValue = { value: string } | null;
 
 export type ShopifyArticle = {
   id: string;
@@ -301,6 +346,13 @@ export type ShopifyArticle = {
   image: Image | null;
   authorV2: { name: string };
   tags: string[];
+  category?: ShopifyMetafieldValue;
+  authorRole?: ShopifyMetafieldValue;
+  photography?: ShopifyMetafieldValue;
+  readTime?: ShopifyMetafieldValue;
+  gallery?: {
+    references?: { nodes: Array<{ image?: Image | null }> };
+  } | null;
   blog: { handle: string; title: string };
 };
 

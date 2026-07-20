@@ -153,7 +153,7 @@ const reshapeCart = (cart: ShopifyCart): Cart => {
 };
 
 const reshapeCollection = (
-  collection: ShopifyCollection
+  collection: ShopifyCollection,
 ): Collection | undefined => {
   if (!collection) {
     return undefined;
@@ -195,7 +195,7 @@ const reshapeImages = (images: Connection<Image>, productTitle: string) => {
 
 const reshapeProduct = (
   product: ShopifyProduct,
-  filterHiddenProducts: boolean = true
+  filterHiddenProducts: boolean = true,
 ) => {
   if (
     !product ||
@@ -204,12 +204,13 @@ const reshapeProduct = (
     return undefined;
   }
 
-  const { images, variants, ...rest } = product;
+  const { images, variants, collections, ...rest } = product;
 
   return {
     ...rest,
     images: reshapeImages(images, product.title),
     variants: removeEdgesAndNodes(variants),
+    collections: collections ? removeEdgesAndNodes(collections) : [],
   };
 };
 
@@ -238,7 +239,7 @@ export async function createCart(): Promise<Cart> {
 }
 
 export async function addToCart(
-  lines: { merchandiseId: string; quantity: number }[]
+  lines: { merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
   const cartId = (await cookies()).get("cartId")?.value!;
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
@@ -265,7 +266,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
 }
 
 export async function updateCart(
-  lines: { id: string; merchandiseId: string; quantity: number }[]
+  lines: { id: string; merchandiseId: string; quantity: number }[],
 ): Promise<Cart> {
   const cartId = (await cookies()).get("cartId")?.value!;
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
@@ -304,7 +305,7 @@ export async function getCart(): Promise<Cart | undefined> {
 }
 
 export async function getCollection(
-  handle: string
+  handle: string,
 ): Promise<Collection | undefined> {
   "use cache";
   cacheTag(TAGS.collections);
@@ -335,7 +336,7 @@ export async function getCollectionProducts({
 
   if (!endpoint) {
     console.log(
-      `Skipping getCollectionProducts for '${collection}' - Shopify not configured`
+      `Skipping getCollectionProducts for '${collection}' - Shopify not configured`,
     );
     return [];
   }
@@ -355,7 +356,7 @@ export async function getCollectionProducts({
   }
 
   return reshapeProducts(
-    removeEdgesAndNodes(res.body.data.collection.products)
+    removeEdgesAndNodes(res.body.data.collection.products),
   );
 }
 
@@ -400,7 +401,7 @@ export async function getCollections(): Promise<Collection[]> {
     // Filter out the `hidden` collections.
     // Collections that start with `hidden-*` need to be hidden on the search page.
     ...reshapeCollections(shopifyCollections).filter(
-      (collection) => !collection.handle.startsWith("hidden")
+      (collection) => !collection.handle.startsWith("hidden"),
     ),
   ];
 
@@ -473,7 +474,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
 }
 
 export async function getProductRecommendations(
-  productId: string
+  productId: string,
 ): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
@@ -554,10 +555,9 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
 }
 
-
 export async function getShopMetafield(
   namespace: string,
-  key: string
+  key: string,
 ): Promise<string | null> {
   "use cache";
   cacheLife("hours");
@@ -583,9 +583,47 @@ export async function getShopMetafield(
     if (!metafield) return null;
     return metafield.value || null;
   } catch (error) {
-    console.error('Error fetching shop metafield:', error);
+    console.error("Error fetching shop metafield:", error);
     return null;
   }
+}
+
+export type SaleBanner = {
+  text: string;
+  link: string | null;
+};
+
+/**
+ * Site-wide sale banner, driven entirely from Shopify so the banner can be
+ * switched on/off and reworded without a redeploy.
+ *
+ * Shop metafields (Settings -> Custom data -> Shop):
+ *   custom.sale_banner_text    single line text   (required)
+ *   custom.sale_banner_active  boolean            (optional; defaults to on when text exists)
+ *   custom.sale_banner_link    url                (optional)
+ *
+ * Returns null when there is nothing to show.
+ */
+export async function getSaleBanner(): Promise<SaleBanner | null> {
+  "use cache";
+  cacheLife("hours");
+
+  if (!endpoint) return null;
+
+  const [text, active, link] = await Promise.all([
+    getShopMetafield("custom", "sale_banner_text"),
+    getShopMetafield("custom", "sale_banner_active"),
+    getShopMetafield("custom", "sale_banner_link"),
+  ]);
+
+  const trimmed = text?.trim();
+  if (!trimmed) return null;
+
+  // Only an explicit "false" turns the banner off; if the boolean metafield
+  // has not been created at all, having text is treated as intent to show it.
+  if (active !== null && active.trim().toLowerCase() === "false") return null;
+
+  return { text: trimmed, link: link?.trim() || null };
 }
 
 const reshapeArticle = (article: ShopifyArticle): Article => ({
@@ -596,7 +634,17 @@ const reshapeArticle = (article: ShopifyArticle): Article => ({
   excerpt: article.excerpt,
   contentHtml: article.contentHtml,
   image: article.image ?? null,
-  author: { name: article.authorV2?.name || "" },
+  author: {
+    name: article.authorV2?.name || "",
+    role: article.authorRole?.value || null,
+  },
+  category: article.category?.value || article.tags?.[0] || null,
+  photography: article.photography?.value || null,
+  readTime: article.readTime?.value || null,
+  gallery:
+    article.gallery?.references?.nodes
+      ?.map((n) => n.image)
+      .filter((img): img is Image => Boolean(img)) ?? [],
   tags: article.tags,
   blog: { handle: article.blog.handle, title: article.blog.title },
 });
@@ -632,20 +680,24 @@ export async function getArticles(): Promise<Article[]> {
         variables: { blogHandle: blog.handle },
       });
       if (!res.body.data.blog) return [];
-      return removeEdgesAndNodes(res.body.data.blog.articles).map(reshapeArticle);
-    })
+      return removeEdgesAndNodes(res.body.data.blog.articles).map(
+        reshapeArticle,
+      );
+    }),
   );
 
   return perBlog
     .flat()
     .sort(
       (a, b) =>
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     );
 }
 
 // Finds a single article by its handle, searching across all blogs.
-export async function getArticle(articleHandle: string): Promise<Article | undefined> {
+export async function getArticle(
+  articleHandle: string,
+): Promise<Article | undefined> {
   "use cache";
   cacheTag(TAGS.articles);
   cacheLife("hours");

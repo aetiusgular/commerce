@@ -1,7 +1,7 @@
 "use client";
 
-import { MagnifyingGlassIcon, UserIcon } from "@heroicons/react/24/outline";
-import CartModal from "components/cart/modal";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import CartLink from "components/cart/cart-link";
 import { Menu } from "lib/shopify/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,8 +9,6 @@ import { Suspense } from "react";
 import MobileMenu from "./mobile-menu";
 import { useNavbarStyles } from "./navbar-styles";
 import Search, { SearchSkeleton } from "./search";
-
-const ACCOUNT_URL = "https://shop.agmnt.space/account";
 
 export function NavbarContent({ menu }: { menu: Menu[] }) {
   const styles = useNavbarStyles();
@@ -38,17 +36,8 @@ export function NavbarContent({ menu }: { menu: Menu[] }) {
             <Search isMobile />
           </Suspense>
 
-          {/* Account Icon - Links to Shopify-hosted customer account */}
-          <a
-            href={ACCOUNT_URL}
-            aria-label="Account"
-            className="flex items-center justify-center"
-          >
-            <UserIcon className="w-8 h-8" />
-          </a>
-
           {/* Cart Icon - Opens Cart Modal */}
-          <CartModal isMobile />
+          <CartLink isMobile />
 
           {/* Plus Icon - Opens Menu */}
           <Suspense fallback={null}>
@@ -64,7 +53,11 @@ export function NavbarContent({ menu }: { menu: Menu[] }) {
           <Link href="/shop" prefetch={true} className="hover:underline">
             SHOP
           </Link>
-          <Link href="/installations" prefetch={true} className="hover:underline">
+          <Link
+            href="/installations"
+            prefetch={true}
+            className="hover:underline"
+          >
             INSTALLATIONS
           </Link>
         </div>
@@ -81,15 +74,12 @@ export function NavbarContent({ menu }: { menu: Menu[] }) {
           </Link>
         </div>
 
-        {/* Right - Search, Account & Cart */}
+        {/* Right - Search & Cart */}
         <div className="flex items-center justify-end gap-6 [&>button]:text-sm [&>button]:hover:underline">
           <Suspense fallback={<SearchSkeleton />}>
             <Search />
           </Suspense>
-          <a href={ACCOUNT_URL} className="text-sm hover:underline">
-            ACCOUNT
-          </a>
-          <CartModal />
+          <CartLink />
         </div>
       </nav>
     </>

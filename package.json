@@ -2,11 +2,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:3001": "next dev --turbopack --port 3001",
     "build": "next build",
     "start": "next start",
     "prettier": "prettier --write --ignore-unknown .",
     "prettier:check": "prettier --check --ignore-unknown .",
-    "test": "pnpm prettier:check"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test": "bun run prettier:check && bun run typecheck"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -22,6 +26,7 @@
     "sonner": "^2.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/postcss": "^4.0.14",
     "@tailwindcss/typography": "^0.5.16",

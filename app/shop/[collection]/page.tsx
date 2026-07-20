@@ -1,10 +1,8 @@
+import { ShopCard } from "components/shop/shop-card";
 import { getCollection, getCollectionProducts } from "lib/shopify";
+import { defaultSort, sorting } from "lib/constants";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-import Grid from "components/grid";
-import ProductGridItems from "components/layout/product-grid-items";
-import { defaultSort, sorting } from "lib/constants";
 
 export async function generateMetadata(props: {
   params: Promise<{ collection: string }>;
@@ -38,15 +36,41 @@ export default async function CategoryPage(props: {
     reverse,
   });
 
+  const collection = await getCollection(params.collection);
+
   return (
-    <section>
+    <>
+      <nav className="shop-crumb">
+        <a href="/">Home</a>
+        <span className="sep">/</span>
+        <a href="/shop">Shop</a>
+        <span className="sep">/</span>
+        <span className="here">{collection?.title ?? params.collection}</span>
+      </nav>
+
+      <header className="shop-hero">
+        <h1>
+          Shop{" "}
+          <em>— {(collection?.title ?? params.collection).toLowerCase()}</em>
+        </h1>
+        <div className="hero-meta">
+          <span className="big agmnt-tnum">{products.length} pieces</span>
+          <span className="mono">SS 2026</span>
+        </div>
+      </header>
+
       {products.length === 0 ? (
-        <p className="py-3 text-lg">{`No products found in this collection`}</p>
+        <div className="slist-empty">
+          <p>No products found in this collection.</p>
+          <a href="/shop">Back to shop →</a>
+        </div>
       ) : (
-        <Grid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          <ProductGridItems products={products} />
-        </Grid>
+        <div className="slist">
+          {products.map((p, i) => (
+            <ShopCard key={p.handle} product={p} index={i} />
+          ))}
+        </div>
       )}
-    </section>
+    </>
   );
 }

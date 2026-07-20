@@ -23,7 +23,9 @@ export default function ProductGridItems({
                 title: product.title,
                 amount: product.priceRange.minVariantPrice.amount,
                 currencyCode: product.priceRange.minVariantPrice.currencyCode,
-                brand: product.vendor
+                compareAtAmount:
+                  product.compareAtPriceRange?.minVariantPrice?.amount,
+                brand: product.vendor,
               }}
               src={product.featuredImage?.url || "/placeholder.png"}
               fill

@@ -36,6 +36,12 @@ export const getBlogArticlesQuery = /* GraphQL */ `
               name
             }
             tags
+            category: metafield(namespace: "custom", key: "category") {
+              value
+            }
+            readTime: metafield(namespace: "custom", key: "read_time") {
+              value
+            }
             blog {
               handle
               title
@@ -68,6 +74,32 @@ export const getArticleQuery = /* GraphQL */ `
           name
         }
         tags
+        category: metafield(namespace: "custom", key: "category") {
+          value
+        }
+        authorRole: metafield(namespace: "custom", key: "author_role") {
+          value
+        }
+        photography: metafield(namespace: "custom", key: "photography") {
+          value
+        }
+        readTime: metafield(namespace: "custom", key: "read_time") {
+          value
+        }
+        gallery: metafield(namespace: "custom", key: "gallery") {
+          references(first: 16) {
+            nodes {
+              ... on MediaImage {
+                image {
+                  url
+                  altText
+                  width
+                  height
+                }
+              }
+            }
+          }
+        }
         blog {
           handle
           title

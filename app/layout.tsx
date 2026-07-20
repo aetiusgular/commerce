@@ -1,7 +1,9 @@
+import { MetaPixel } from "components/analytics/meta-pixel";
 import { CartProvider } from "components/cart/cart-context";
 import { Navbar } from "components/layout/navbar";
 import { PersistentHero } from "components/layout/persistent-hero";
-import { getCart, getShopMetafield } from "lib/shopify";
+import { SaleBanner } from "components/layout/sale-banner";
+import { getCart, getSaleBanner, getShopMetafield } from "lib/shopify";
 import { baseUrl } from "lib/utils";
 import localFont from "next/font/local";
 import { ReactNode } from "react";
@@ -47,6 +49,9 @@ export default async function RootLayout({
   const videoUrl = await getShopMetafield("custom", "homepage_video");
   const videoOrigin = videoUrl ? safeOrigin(videoUrl) : null;
 
+  // Sale banner copy lives in Shopify shop metafields — see getSaleBanner().
+  const saleBanner = await getSaleBanner();
+
   return (
     <html lang="en" className={vremena.variable}>
       <head>
@@ -59,8 +64,13 @@ export default async function RootLayout({
             handshake is already done when <PersistentHero> mounts. */}
         {videoOrigin && <link rel="preconnect" href={videoOrigin} />}
       </head>
-      <body className="bg-white text-black selection:bg-pink-500 dark:bg-white dark:text-black dark:selection:bg-teal-300 dark:selection:text-black">
+      <body
+        suppressHydrationWarning
+        className="bg-white text-black selection:bg-pink-500 dark:bg-white dark:text-black dark:selection:bg-teal-300 dark:selection:text-black"
+      >
+        <MetaPixel />
         <CartProvider cartPromise={cart}>
+          <SaleBanner banner={saleBanner} />
           <Navbar />
           {/* Persistent hero — mounted once on first home visit, kept in DOM
               across navigations so returning to home is flash-free. */}

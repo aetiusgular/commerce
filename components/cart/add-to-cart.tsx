@@ -1,6 +1,7 @@
 "use client";
 
 import { addItem } from "components/cart/actions";
+import { trackAddToCart } from "lib/analytics";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
@@ -53,14 +54,14 @@ export function AddToCart({ product }: { product: Product }) {
 
   const variant = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every(
-      (option) => option.value === searchParams.get(option.name.toLowerCase())
-    )
+      (option) => option.value === searchParams.get(option.name.toLowerCase()),
+    ),
   );
   const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
   const selectedVariantId = variant?.id || defaultVariantId;
   const addItemAction = formAction.bind(null, selectedVariantId);
   const finalVariant = variants.find(
-    (variant) => variant.id === selectedVariantId
+    (variant) => variant.id === selectedVariantId,
   )!;
 
   return (
@@ -68,6 +69,13 @@ export function AddToCart({ product }: { product: Product }) {
       action={async () => {
         if (finalVariant) {
           addCartItem(finalVariant, product);
+          // Meta Pixel conversion event. No-ops when the pixel is unconfigured.
+          trackAddToCart({
+            id: finalVariant.id,
+            title: product.title,
+            value: parseFloat(finalVariant.price.amount),
+            currency: finalVariant.price.currencyCode,
+          });
         }
         addItemAction();
       }}
