@@ -14,9 +14,13 @@ type Img = { url: string; altText: string };
 export function ProductGallery({
   images,
   lastPair = false,
+  fallbackAlt = "",
 }: {
   images: Img[];
   lastPair?: boolean;
+  /** Used as the alt text (brand + product) whenever a Shopify image has no
+   * altText of its own, so no product image ships with an empty alt. */
+  fallbackAlt?: string;
 }) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
@@ -66,7 +70,7 @@ export function ProductGallery({
           {lastPair && <span className="stage-tag">Last pair</span>}
           <Image
             src={images[active]!.url}
-            alt={images[active]!.altText || ""}
+            alt={images[active]!.altText || fallbackAlt}
             fill
             sizes="(min-width: 1100px) 55vw, 100vw"
             priority
@@ -96,7 +100,12 @@ export function ProductGallery({
               {lastPair && i === 0 && (
                 <span className="stage-tag">Last pair</span>
               )}
-              <Image src={im.url} alt={im.altText || ""} fill sizes="100vw" />
+              <Image
+                src={im.url}
+                alt={im.altText || fallbackAlt}
+                fill
+                sizes="100vw"
+              />
             </div>
           ))}
         </div>
@@ -139,7 +148,7 @@ export function ProductGallery({
               <div className="lb-img" onClick={(e) => e.stopPropagation()}>
                 <Image
                   src={images[lightbox]!.url}
-                  alt={images[lightbox]!.altText || ""}
+                  alt={images[lightbox]!.altText || fallbackAlt}
                   fill
                   sizes="90vw"
                 />

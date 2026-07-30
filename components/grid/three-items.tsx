@@ -1,6 +1,7 @@
 import { GridTileImage } from "components/grid/tile";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
+import { productPath } from "lib/utils";
 import Link from "next/link";
 
 function ThreeItemGridItem({
@@ -22,7 +23,7 @@ function ThreeItemGridItem({
     >
       <Link
         className="relative block aspect-square h-full w-full"
-        href={`/product/${item.handle}`}
+        href={productPath(item)}
         prefetch={true}
       >
         <GridTileImage

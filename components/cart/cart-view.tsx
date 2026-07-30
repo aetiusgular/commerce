@@ -2,7 +2,7 @@
 
 import { DEFAULT_OPTION } from "lib/constants";
 import type { Cart, CartItem } from "lib/shopify/types";
-import { colorHex } from "lib/utils";
+import { colorHex, productPath } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { useTransition } from "react";
@@ -32,7 +32,7 @@ function CartRow({ item, index }: { item: CartItem; index: number }) {
   const params = new URLSearchParams(
     opts.map((o) => [o.name.toLowerCase(), o.value]),
   );
-  const href = `/product/${product.handle}${
+  const href = `${productPath(product)}${
     params.toString() ? `?${params.toString()}` : ""
   }`;
 

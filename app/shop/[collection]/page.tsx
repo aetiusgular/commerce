@@ -17,7 +17,10 @@ export async function generateMetadata(props: {
     description:
       collection.seo?.description ||
       collection.description ||
-      `${collection.title} products`,
+      `Shop ${collection.title} in stock at AGMNT — official stockist, ships from Los Angeles.`,
+    alternates: {
+      canonical: `/shop/${params.collection}`,
+    },
   };
 }
 
@@ -58,6 +61,17 @@ export default async function CategoryPage(props: {
           <span className="mono">SS 2026</span>
         </div>
       </header>
+
+      {collection && (
+        <p
+          className="shop-crumb"
+          style={{ paddingBottom: 12, maxWidth: "70ch" }}
+        >
+          {collection.description
+            ? collection.description
+            : `Official stockist of ${collection.title}. In stock and shipped from our Los Angeles studio.`}
+        </p>
+      )}
 
       {products.length === 0 ? (
         <div className="slist-empty">

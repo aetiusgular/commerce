@@ -1,5 +1,6 @@
 import { getCollectionProducts, getProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
+import { productPath } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { SectionHead } from "./section-head";
@@ -46,7 +47,7 @@ export async function Lookbook() {
           return (
             <Link
               key={look.handle}
-              href={`/product/${look.handle}`}
+              href={productPath(look)}
               className="group flex flex-col"
             >
               <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100">
@@ -65,8 +66,12 @@ export async function Lookbook() {
                 Look {num} <em className="not-italic text-black/60">— {sub}</em>
               </div>
               <div className="mt-1 flex items-center justify-between font-vremena text-[10px] uppercase tracking-[-0.02em] text-black/50">
-                <span>Look {num} / {String(looks.length).padStart(2, "0")}</span>
-                <span className="group-hover:text-black transition-colors">Shop the look →</span>
+                <span>
+                  Look {num} / {String(looks.length).padStart(2, "0")}
+                </span>
+                <span className="group-hover:text-black transition-colors">
+                  Shop the look →
+                </span>
               </div>
             </Link>
           );

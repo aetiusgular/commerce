@@ -1,5 +1,5 @@
 import type { Product } from "lib/shopify/types";
-import { formatMoney, isOnSale } from "lib/utils";
+import { formatMoney, isOnSale, productPath } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ import Link from "next/link";
  * name and the price (muted; sale shows a struck original + red price).
  */
 export function ShopCard({ product }: { product: Product; index?: number }) {
-  const href = `/product/${product.handle}`;
+  const href = productPath(product);
 
   const price = product.priceRange.minVariantPrice;
   const compareAt = product.compareAtPriceRange?.minVariantPrice ?? null;
@@ -33,7 +33,12 @@ export function ShopCard({ product }: { product: Product; index?: number }) {
           <Image
             className="scard-base"
             src={product.featuredImage.url}
-            alt={product.featuredImage.altText || product.title}
+            alt={
+              product.featuredImage.altText ||
+              (product.vendor
+                ? `${product.vendor} ${product.title}`
+                : product.title)
+            }
             fill
             sizes="(min-width: 900px) 30vw, 50vw"
           />
