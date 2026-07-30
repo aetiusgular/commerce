@@ -23,6 +23,9 @@ export const metadata = {
     default: SITE_NAME!,
     template: `%s | ${SITE_NAME}`,
   },
+  alternates: {
+    canonical: "/",
+  },
   robots: {
     follow: true,
     index: true,
@@ -52,6 +55,39 @@ export default async function RootLayout({
   // Sale banner copy lives in Shopify shop metafields — see getSaleBanner().
   const saleBanner = await getSaleBanner();
 
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "AGMNT",
+    alternateName: ["Augment", "AGMNT Store"],
+    url: baseUrl,
+    logo: `${baseUrl}/images/AGMNT-logo-black.png`,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Los Angeles",
+      addressRegion: "CA",
+      addressCountry: "US",
+    },
+    sameAs: [
+      process.env.NEXT_PUBLIC_WIKIDATA_URL,
+      "https://www.instagram.com/agmnt_store/",
+      "https://www.facebook.com/p/AGMNT-Store-61567711654132/",
+      "https://www.linkedin.com/company/agmnt-store",
+    ].filter(Boolean),
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "AGMNT",
+    url: baseUrl,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${baseUrl}/shop?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <html lang="en" className={vremena.variable}>
       <head>
@@ -63,6 +99,18 @@ export default async function RootLayout({
         {/* Open the connection to Supabase storage early so the hero video
             handshake is already done when <PersistentHero> mounts. */}
         {videoOrigin && <link rel="preconnect" href={videoOrigin} />}
+
+        {/* Entity markup — declares AGMNT as an Organization (pronounced
+            "augment") and links its scattered identities so Google merges them
+            into one entity and separates it from agmnt.com / agmnt.app. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
       </head>
       <body
         suppressHydrationWarning

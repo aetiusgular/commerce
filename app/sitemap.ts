@@ -1,5 +1,10 @@
-import { getCollections, getPages, getProducts } from "lib/shopify";
-import { baseUrl, validateEnvironmentVariables } from "lib/utils";
+import {
+  getArticles,
+  getCollections,
+  getPages,
+  getProducts,
+} from "lib/shopify";
+import { baseUrl, productPath, validateEnvironmentVariables } from "lib/utils";
 import { MetadataRoute } from "next";
 
 type Route = {
@@ -26,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const productsPromise = getProducts({}).then((products) =>
     products.map((product) => ({
-      url: `${baseUrl}/product/${product.handle}`,
+      url: `${baseUrl}${productPath(product)}`,
       lastModified: product.updatedAt,
     })),
   );
@@ -38,15 +43,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
+  const articlesPromise = getArticles().then((articles) =>
+    articles.map((article) => ({
+      url: `${baseUrl}/installations/${article.handle}`,
+      lastModified: article.publishedAt,
+    })),
+  );
+
+  // The editorial index itself.
+  const staticRoutes: Route[] = [
+    { url: `${baseUrl}/shop`, lastModified: new Date().toISOString() },
+    { url: `${baseUrl}/installations`, lastModified: new Date().toISOString() },
+  ];
+
   let fetchedRoutes: Route[] = [];
 
   try {
     fetchedRoutes = (
-      await Promise.all([collectionsPromise, productsPromise, pagesPromise])
+      await Promise.all([
+        collectionsPromise,
+        productsPromise,
+        pagesPromise,
+        articlesPromise,
+      ])
     ).flat();
   } catch (error) {
     throw JSON.stringify(error, null, 2);
   }
+
+  fetchedRoutes = [...staticRoutes, ...fetchedRoutes];
 
   return [...routesMap, ...fetchedRoutes];
 }

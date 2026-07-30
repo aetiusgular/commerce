@@ -6,7 +6,7 @@ import LoadingDots from "components/loading-dots";
 import Price from "components/price";
 import { DEFAULT_OPTION } from "lib/constants";
 import type { CartItem } from "lib/shopify/types";
-import { createUrl } from "lib/utils";
+import { createUrl, productPath } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -179,7 +179,7 @@ function CartModalContent({
                       );
 
                       const merchandiseUrl = createUrl(
-                        `/product/${item.merchandise.product.handle}`,
+                        productPath(item.merchandise.product),
                         new URLSearchParams(merchandiseSearchParams),
                       );
 

@@ -1,9 +1,16 @@
 import { ReadonlyURLSearchParams } from "next/navigation";
 import type { Money } from "lib/shopify/types";
 
-export const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
+// Canonical origin. Prefer an explicit NEXT_PUBLIC_SITE_URL (set to
+// https://agmnt.space in production) so canonical tags, sitemap, robots, and
+// structured data never split between www/non-www or a vercel.app host.
+const rawBaseUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
+export const baseUrl = rawBaseUrl.replace(/\/$/, "");
 
 /* ------------------------------------------------------------------ *
  * Sale pricing
@@ -108,6 +115,33 @@ export const colorHex = (name: string): string => {
   };
   const key = name.trim().toLowerCase();
   return map[key] ?? map[key.split(" ")[0] ?? ""] ?? "#b8b6b0";
+};
+
+/** URL-safe slug: lowercase, punctuation stripped, spaces → hyphens.
+ *  "POST ARCHIVE FACTION (PAF)" → "post-archive-faction-paf". */
+export const slugify = (input: string): string =>
+  input
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+/**
+ * Canonical product path with the brand as its own segment, SSENSE-style:
+ * `/product/<brand>/<handle>`. The brand comes from the vendor field, so it is
+ * always present regardless of how the Shopify handle was named. Falls back to
+ * `/product/<handle>` only when a product has no vendor (the legacy route then
+ * 308-redirects it to the branded URL).
+ */
+export const productPath = (p: {
+  handle: string;
+  vendor?: string | null;
+}): string => {
+  const brand = p.vendor ? slugify(p.vendor) : "";
+  return brand ? `/product/${brand}/${p.handle}` : `/product/${p.handle}`;
 };
 
 export const createUrl = (

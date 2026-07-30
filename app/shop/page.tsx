@@ -7,6 +7,9 @@ import { isOnSale } from "lib/utils";
 export const metadata = {
   title: "Shop",
   description: "Shop for products in the store.",
+  alternates: {
+    canonical: "/shop",
+  },
 };
 
 // Categories = Shopify collections (minus system/hidden ones).

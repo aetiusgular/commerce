@@ -3,6 +3,7 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Cross1Icon } from "@radix-ui/react-icons";
 import { Command } from "cmdk";
+import { productPath } from "lib/utils";
 import { useEffect, useState } from "react";
 import "./search.css";
 
@@ -10,6 +11,7 @@ interface Product {
   id: string;
   title: string;
   handle: string;
+  vendor?: string;
   priceRange: {
     minVariantPrice: {
       amount: string;
@@ -40,7 +42,7 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
   useEffect(() => {
     if (searchQuery) {
       const filtered = products.filter((product) =>
-        product.title.toLowerCase().includes(searchQuery.toLowerCase())
+        product.title.toLowerCase().includes(searchQuery.toLowerCase()),
       );
       setFilteredProducts(filtered);
     } else {
@@ -65,7 +67,7 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
       const data = await response.json();
       // Filter out the "All" collection (handle === "")
       const filteredCollections = (data.collections || []).filter(
-        (c: Collection) => c.handle !== ""
+        (c: Collection) => c.handle !== "",
       );
       setCollections(filteredCollections);
     } catch (error) {
@@ -84,7 +86,7 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
 
       const response = await fetch(`/api/collections/${handle}`);
       const data = await response.json();
-      
+
       if (data.products && data.products.length > 0) {
         setFilteredProducts(data.products);
       } else {
@@ -156,13 +158,18 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
                       value={product.title}
                       className="search-item cursor-pointer hover:opacity-60 py-2 w-full transition-opacity"
                       onSelect={() => {
-                        window.location.href = `/product/${product.handle}`;
+                        window.location.href = productPath(product);
                       }}
                     >
                       <div className="flex justify-between items-start gap-4 w-full">
-                        <span className="flex-1 break-words">{product.title}</span>
+                        <span className="flex-1 break-words">
+                          {product.title}
+                        </span>
                         <span className="whitespace-nowrap flex-shrink-0">
-                          ${parseFloat(product.priceRange.minVariantPrice.amount).toFixed(0)}
+                          $
+                          {parseFloat(
+                            product.priceRange.minVariantPrice.amount,
+                          ).toFixed(0)}
                         </span>
                       </div>
                     </Command.Item>
@@ -201,5 +208,7 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
 }
 
 export function SearchSkeleton() {
-  return <button className="hover:opacity-60 transition-opacity">SEARCH</button>;
+  return (
+    <button className="hover:opacity-60 transition-opacity">SEARCH</button>
+  );
 }
