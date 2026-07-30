@@ -20,10 +20,19 @@ export function ShopFilters({
   facets,
   resultCount,
   children,
+  basePath = "/shop",
+  brandHrefs,
 }: {
   facets: Facets;
   resultCount: number;
   children: React.ReactNode;
+  /** Path filter URLs are built against. "/shop" on the index, or
+   *  "/shop/<collection>" so refinements stay within a category/brand page. */
+  basePath?: string;
+  /** Optional vendor → brand-collection href map. When a designer has an
+   *  entry, the rail links to that crawlable landing page instead of a
+   *  ?vendor= param, funnelling users + crawlers to the indexable brand URL. */
+  brandHrefs?: Record<string, string>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -52,7 +61,7 @@ export function ShopFilters({
     if (value === null) p.delete(key);
     else p.set(key, value);
     const qs = p.toString();
-    return `/shop${qs ? `?${qs}` : ""}`;
+    return `${basePath}${qs ? `?${qs}` : ""}`;
   };
 
   const go = (key: string, value: string | null) => {
@@ -73,7 +82,7 @@ export function ShopFilters({
 
   const reset = () => {
     setDq("");
-    router.push("/shop");
+    router.push(basePath);
     setDrawer(false);
   };
 
@@ -87,54 +96,71 @@ export function ShopFilters({
         <span className="lab">Sale</span>
       </button>
 
-      <div className="frail-group">
-        <h4
-          className={`frail-head ${!type ? "sel" : ""}`}
-          onClick={() => go("type", null)}
-        >
-          Categories
-        </h4>
-        <div className="frail-list">
-          {facets.categories.map((c) => (
-            <button
-              key={c}
-              className={`frail-opt up ${type === c ? "sel" : ""}`}
-              onClick={() => toggle("type", type, c)}
-            >
-              {c}
-            </button>
-          ))}
+      {facets.categories.length > 0 && (
+        <div className="frail-group">
+          <h4
+            className={`frail-head ${!type ? "sel" : ""}`}
+            onClick={() => go("type", null)}
+          >
+            Categories
+          </h4>
+          <div className="frail-list">
+            {facets.categories.map((c) => (
+              <button
+                key={c}
+                className={`frail-opt up ${type === c ? "sel" : ""}`}
+                onClick={() => toggle("type", type, c)}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="frail-group">
-        <h4
-          className={`frail-head ${!vendor ? "sel" : ""}`}
-          onClick={() => go("vendor", null)}
-        >
-          Designers
-        </h4>
-        <input
-          className="designer-search"
-          placeholder="Search designers"
-          value={dq}
-          onChange={(e) => setDq(e.target.value)}
-        />
-        <div className="frail-list">
-          {shownDesigners.map((d) => (
-            <button
-              key={d}
-              className={`frail-opt ${vendor === d ? "sel" : ""}`}
-              onClick={() => toggle("vendor", vendor, d)}
-            >
-              {d}
-            </button>
-          ))}
-          {shownDesigners.length === 0 && (
-            <span className="frail-none">No houses match</span>
-          )}
+      {facets.designers.length > 0 && (
+        <div className="frail-group">
+          <h4
+            className={`frail-head ${!vendor ? "sel" : ""}`}
+            onClick={() => go("vendor", null)}
+          >
+            Designers
+          </h4>
+          <input
+            className="designer-search"
+            placeholder="Search designers"
+            value={dq}
+            onChange={(e) => setDq(e.target.value)}
+          />
+          <div className="frail-list">
+            {shownDesigners.map((d) => {
+              // On the shop index, designers link to their crawlable brand
+              // collection page; inside a category page they refine in place
+              // (?vendor=) so the category ∩ brand intersection is preserved.
+              const brandHref = brandHrefs?.[d];
+              return (
+                <button
+                  key={d}
+                  className={`frail-opt ${vendor === d ? "sel" : ""}`}
+                  onClick={() => {
+                    if (brandHref) {
+                      router.push(brandHref);
+                      setDrawer(false);
+                    } else {
+                      toggle("vendor", vendor, d);
+                    }
+                  }}
+                >
+                  {d}
+                </button>
+              );
+            })}
+            {shownDesigners.length === 0 && (
+              <span className="frail-none">No houses match</span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 

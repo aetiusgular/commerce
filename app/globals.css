@@ -319,7 +319,7 @@ video::-webkit-media-controls-play-button {
   overflow-wrap: anywhere;
 }
 .frail-opt.up {
-  text-transform: uppercase;
+  text-transform: capitalize;
   font-size: 10.5px;
   letter-spacing: 0.04em;
 }
