@@ -1,6 +1,6 @@
 import { ShopBrowser } from "components/shop/shop-browser";
 import { getCollection, getCollectionProducts } from "lib/shopify";
-import { computeFacets } from "lib/shop-facets";
+import { computeFacets, initialFromParams } from "lib/shop-facets";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -28,8 +28,10 @@ export async function generateMetadata(props: {
 
 export default async function CategoryPage(props: {
   params: Promise<{ collection: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await props.params;
+  const sp = (await props.searchParams) ?? {};
 
   const [collection, products] = await Promise.all([
     getCollection(params.collection),
@@ -80,7 +82,7 @@ export default async function CategoryPage(props: {
           <a href="/shop">Back to shop →</a>
         </div>
       ) : (
-        <ShopBrowser products={products} />
+        <ShopBrowser products={products} initial={initialFromParams(sp)} />
       )}
     </>
   );

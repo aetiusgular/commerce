@@ -6,12 +6,14 @@ import {
   categoriesOf,
   colorOf,
   computeFacets,
+  type InitialShopFilters,
   priceNum,
   productIsOnSale,
 } from "lib/shop-facets";
 import type { Product } from "lib/shopify/types";
 import { colorHex } from "lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const STEP = 10;
 const SORTS = [
@@ -21,6 +23,14 @@ const SORTS = [
   "Discount — high to low",
 ] as const;
 type Sort = (typeof SORTS)[number];
+
+// URL slugs for each sort (the default sort is left off the URL entirely).
+const SORT_SLUGS: Record<Sort, string> = {
+  "Latest arrivals": "",
+  "Price — low to high": "price-asc",
+  "Price — high to low": "price-desc",
+  "Discount — high to low": "discount",
+};
 
 type Dim = "cats" | "designers" | "colors";
 type Filters = {
@@ -51,7 +61,15 @@ const hit = (p: Product, dim: Dim, v: string): boolean => {
  * a full-screen Filter & sort sheet below 900px. Filtering lives here so the
  * counts, the price slider and the grid all stay in exact sync.
  */
-export function ShopBrowser({ products }: { products: Product[] }) {
+export function ShopBrowser({
+  products,
+  initial,
+  brandHrefs,
+}: {
+  products: Product[];
+  initial?: InitialShopFilters;
+  brandHrefs?: Record<string, string>;
+}) {
   const facets = useMemo(() => computeFacets(products), [products]);
 
   const [priceMin, priceMax] = useMemo(() => {
@@ -61,21 +79,65 @@ export function ShopBrowser({ products }: { products: Product[] }) {
     return [Number.isFinite(lo) ? lo : 0, Number.isFinite(hi) ? hi : 0];
   }, [products]);
 
-  const [f, setF] = useState<Filters>({
-    cats: [],
-    designers: [],
-    colors: [],
-    range: [priceMin, priceMax],
-    sale: false,
-    sort: SORTS[0],
+  // Seed filter state from the URL (parsed server-side into `initial`), clamped
+  // to what actually exists in this catalogue so a stale link never breaks.
+  const [f, setF] = useState<Filters>(() => {
+    const keep = (vals: string[] | undefined, allowed: string[]) =>
+      (vals ?? []).filter((v) => allowed.includes(v));
+    const lo =
+      typeof initial?.min === "number" && initial.min >= priceMin
+        ? initial.min
+        : priceMin;
+    const hi =
+      typeof initial?.max === "number" && initial.max <= priceMax
+        ? initial.max
+        : priceMax;
+    return {
+      cats: keep(initial?.cats, facets.categories),
+      designers: keep(initial?.designers, facets.designers),
+      colors: keep(initial?.colors, facets.colors),
+      range: [Math.min(lo, hi), Math.max(lo, hi)],
+      sale: Boolean(initial?.sale),
+      sort: SORTS.find((s) => SORT_SLUGS[s] === initial?.sort) ?? SORTS[0],
+    };
   });
   const [dq, setDq] = useState("");
   const [sheet, setSheet] = useState(false);
 
-  // Keep the range pinned to the catalogue bounds until the user narrows it.
+  // Re-pin the range to the catalogue bounds only when those bounds actually
+  // change — not on first mount, which would clobber a URL-seeded range.
+  const boundsReady = useRef(false);
   useEffect(() => {
+    if (!boundsReady.current) {
+      boundsReady.current = true;
+      return;
+    }
     setF((s) => ({ ...s, range: [priceMin, priceMax] }));
   }, [priceMin, priceMax]);
+
+  // Mirror the active filters into the URL so any filtered view is a shareable,
+  // linkable address (multiple brands included). replaceState keeps it purely
+  // client-side; the navbar's ?q= search is preserved. The page canonical stays
+  // /shop, so these filtered URLs are shareable without becoming indexable
+  // duplicates.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) params.set("q", q);
+    f.designers.forEach((d) => params.append("designer", d));
+    f.cats.forEach((c) => params.append("category", c));
+    f.colors.forEach((c) => params.append("color", c));
+    if (f.sale) params.set("sale", "1");
+    if (f.range[0] > priceMin) params.set("min", String(f.range[0]));
+    if (f.range[1] < priceMax) params.set("max", String(f.range[1]));
+    if (SORT_SLUGS[f.sort]) params.set("sort", SORT_SLUGS[f.sort]);
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      qs ? `${window.location.pathname}?${qs}` : window.location.pathname,
+    );
+  }, [f, priceMin, priceMax]);
 
   useEffect(() => {
     if (!sheet) return;
@@ -413,7 +475,12 @@ export function ShopBrowser({ products }: { products: Product[] }) {
     ) : (
       <div className="sgrid">
         {list.map((p, i) => (
-          <ShopCard key={p.handle} product={p} index={i} />
+          <ShopCard
+            key={p.handle}
+            product={p}
+            index={i}
+            brandHref={p.vendor ? brandHrefs?.[p.vendor] : undefined}
+          />
         ))}
       </div>
     );
@@ -452,21 +519,27 @@ export function ShopBrowser({ products }: { products: Product[] }) {
             <section className="bnote">
               <div className="bnote-t">
                 <h2>
-                  {brand} <em>— Fall / Winter 2025</em>
+                  {brandHrefs?.[brand] ? (
+                    <Link href={brandHrefs[brand]}>{brand}</Link>
+                  ) : (
+                    brand
+                  )}
                 </h2>
               </div>
               {brandInfo?.note && <p>{brandInfo.note}</p>}
               <div className="bnote-m mono">
-                <span>
-                  {brandInfo?.est ? `Est. ${brandInfo.est}` : "Independent"}
-                </span>
-                {brandInfo?.city && (
+                {brandInfo?.est && (
                   <>
+                    <span>Est. {brandInfo.est}</span>
                     <span className="sl">/</span>
-                    <span>{brandInfo.city}</span>
                   </>
                 )}
-                <span className="sl">/</span>
+                {brandInfo?.city && (
+                  <>
+                    <span>{brandInfo.city}</span>
+                    <span className="sl">/</span>
+                  </>
+                )}
                 <span>
                   {brandStats.n} {brandStats.n === 1 ? "piece" : "pieces"}
                 </span>
