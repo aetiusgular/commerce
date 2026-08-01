@@ -137,20 +137,6 @@ export function ProductPanel({ product }: { product: Product }) {
     ? null
     : parseKeyValues(product.sizeFit?.value);
 
-  const addToBag = () => {
-    if (!canAdd || !variant) return;
-    addCartItem(variant, product);
-    trackAddToCart({
-      id: variant.id,
-      title: product.title,
-      value: parseFloat(variant.price.amount),
-      currency: variant.price.currencyCode,
-    });
-    formRef.current?.requestSubmit();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1800);
-  };
-
   return (
     <div className="info2">
       <div className="info-sticky">
@@ -255,27 +241,38 @@ export function ProductPanel({ product }: { product: Product }) {
           </>
         )}
 
-        {/* Add to bag + wishlist. The form runs the server mutation; the
-            optimistic cart update happens in addToBag's onClick. */}
+        {/* Add to cart. The form runs the server mutation; the optimistic
+            cart update happens in addToCart's onClick. */}
         <form
           ref={formRef}
           action={async () => {
-            await addItem(null, variant?.id);
+            if (!canAdd || !variant) return;
+            // Optimistic add + track + server action, all inside the form
+            // action (React 19 requires optimistic updates inside an action).
+            addCartItem(variant, product);
+            trackAddToCart({
+              id: variant.id,
+              title: product.title,
+              value: parseFloat(variant.price.amount),
+              currency: variant.price.currencyCode,
+            });
+            await addItem(null, variant.id);
+            setAdded(true);
+            setTimeout(() => setAdded(false), 1800);
           }}
         >
           <div className="buy">
             <button
-              type="button"
+              type="submit"
               className={`atc ${added ? "added" : ""} ${canAdd ? "" : "disabled"}`}
-              onClick={addToBag}
               disabled={!canAdd}
             >
               {added
-                ? "✓ Added to bag"
+                ? "✓ Added to cart"
                 : needsSize
                   ? "Select a size"
                   : variant?.availableForSale
-                    ? "Add to bag"
+                    ? "Add to cart"
                     : "Sold out"}
             </button>
           </div>

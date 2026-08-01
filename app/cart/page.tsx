@@ -2,8 +2,8 @@ import { CartView } from "components/cart/cart-view";
 import Footer from "components/layout/footer";
 
 export const metadata = {
-  title: "Bag",
-  description: "Your AGMNT bag.",
+  title: "Cart",
+  description: "Your AGMNT cart.",
 };
 
 export default function CartPage() {

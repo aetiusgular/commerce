@@ -94,7 +94,7 @@ export function ShopCard({
           href={productPath(product)}
           className="font-vremena text-[11px] tracking-[-0.02em] uppercase border border-black px-3 py-1 hover:bg-black hover:text-white transition-colors"
         >
-          Add to bag
+          Add to cart
         </Link>
       </div>
     </article>

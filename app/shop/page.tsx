@@ -1,8 +1,6 @@
-import { ShopCard } from "components/shop/shop-card";
-import { ShopFilters, type Facets } from "components/shop/shop-filters";
-import { getCollections, getProducts } from "lib/shopify";
-import { applyShopFilters, computeFacets } from "lib/shop-facets";
-import { slugify } from "lib/utils";
+import { ShopBrowser } from "components/shop/shop-browser";
+import { getProducts } from "lib/shopify";
+import { applyShopFilters } from "lib/shop-facets";
 
 export const metadata = {
   title: "Shop",
@@ -16,61 +14,13 @@ export default async function ShopPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const sp = (await props.searchParams) as { [key: string]: string };
-  const { type, vendor, color, sort, sale, q } = sp;
+  const q = sp?.q;
 
-  // Fetch everything once; derive facets and filter/sort in-process so the
-  // three rails stay in sync and the counts are exact.
-  const [all, collections] = await Promise.all([
-    getProducts({}),
-    getCollections(),
-  ]);
+  // Fetch the whole catalogue; the v7 browser filters and sorts client-side so
+  // the facet counts, price slider and grid all stay in sync. A navbar search
+  // (?q=) pre-narrows the set before the rail's faceting takes over.
+  const all = await getProducts({});
+  const products = q ? applyShopFilters(all, { q }) : all;
 
-  const facets: Facets = computeFacets(all);
-
-  // Map each designer to its dedicated brand collection page when one exists
-  // (an automated collection with condition Vendor = <brand>). Matched by
-  // slug, so it works whether the handle equals the vendor slug or the
-  // collection title equals the vendor name. Designers with no brand collection
-  // yet fall back to in-page ?vendor= filtering inside ShopFilters.
-  const brandHrefs: Record<string, string> = {};
-  for (const v of facets.designers) {
-    const vslug = slugify(v);
-    const match = collections.find(
-      (c) => c.handle === vslug || slugify(c.title) === vslug,
-    );
-    if (match?.handle) brandHrefs[v] = `/shop/${match.handle}`;
-  }
-
-  const list = applyShopFilters(all, { type, vendor, color, sort, sale, q });
-  const dirty = Boolean(type || vendor || color || sort || sale || q);
-
-  return (
-    <>
-      <ShopFilters
-        facets={facets}
-        resultCount={list.length}
-        brandHrefs={brandHrefs}
-      >
-        <div className="slist-head">
-          <span className="agmnt-tnum">
-            {list.length} {list.length === 1 ? "piece" : "pieces"} shown
-          </span>
-          {dirty && <a href="/shop">Clear all ✕</a>}
-        </div>
-
-        {list.length > 0 ? (
-          <div className="slist">
-            {list.map((p, i) => (
-              <ShopCard key={p.handle} product={p} index={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="slist-empty">
-            <p>No pieces match your filters.</p>
-            <a href="/shop">Clear all filters →</a>
-          </div>
-        )}
-      </ShopFilters>
-    </>
-  );
+  return <ShopBrowser products={products} />;
 }

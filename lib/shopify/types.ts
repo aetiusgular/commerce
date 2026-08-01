@@ -320,6 +320,12 @@ export type Article = {
   category: string | null;
   /** Photography credit, e.g. "Studio AGMNT". */
   photography: string | null;
+  /** Styling credit (editorial/campaign folios). */
+  styling: string | null;
+  /** Location, e.g. "Seoul" (editorial/campaign folios). */
+  location: string | null;
+  /** Season label, e.g. "Fall / Winter 2025" (editorial/campaign folios). */
+  season: string | null;
   /** Read-time label, e.g. "12 min read". */
   readTime: string | null;
   /** Extra images beyond the hero, for the reference two-up / breakout layout. */
@@ -349,6 +355,9 @@ export type ShopifyArticle = {
   category?: ShopifyMetafieldValue;
   authorRole?: ShopifyMetafieldValue;
   photography?: ShopifyMetafieldValue;
+  styling?: ShopifyMetafieldValue;
+  location?: ShopifyMetafieldValue;
+  season?: ShopifyMetafieldValue;
   readTime?: ShopifyMetafieldValue;
   gallery?: {
     references?: { nodes: Array<{ image?: Image | null }> };

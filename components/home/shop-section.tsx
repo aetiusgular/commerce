@@ -1,7 +1,6 @@
 import { getCollections, getProducts } from "lib/shopify";
-import Link from "next/link";
 import { SectionHead } from "./section-head";
-import { ShopCard } from "./shop-card";
+import { SelectionGrid } from "./selection-grid";
 
 // Deterministic shuffle seeded by the UTC week index — same order for all
 // visitors during a 7-day window, rotates at midnight UTC every Monday.
@@ -31,52 +30,45 @@ export async function ShopSection() {
   ]);
 
   const featured = weeklyShuffle(products).slice(0, 4);
-  // Skip the synthetic "All" collection (handle === "") in the sidebar list.
-  const filterCollections = collections.filter((c) => c.handle !== "");
+
+  // Total collection count for the header stat (excludes the synthetic "All"
+  // collection whose handle is empty).
+  const totalCollections = collections.filter((c) => c.handle !== "").length;
+
+  // The rail lists only real category / department collections — never the
+  // per-brand collections (title === a vendor) or the Archive collection — and
+  // is capped so it can never run taller than the four product cards, which is
+  // what was creating the dead space.
+  const brandNames = new Set(
+    products.map((p) => p.vendor?.toLowerCase()).filter(Boolean),
+  );
+  const categoryCollections = collections
+    .filter(
+      (c) =>
+        c.handle !== "" &&
+        c.title.toLowerCase() !== "archive" &&
+        !brandNames.has(c.title.toLowerCase()),
+    )
+    .slice(0, 10);
 
   return (
-    <section id="shop">
+    <div className="agmnt-home" id="shop">
       <SectionHead
         num="02"
         title="Shop"
-        count={`${products.length} pieces, ${filterCollections.length} collections`}
+        count={`${products.length} pieces, ${totalCollections} collections`}
         linkText="View all →"
         linkHref="/shop"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 lg:gap-8 px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-6">
-        {/* Sidebar */}
-        <aside className="flex flex-col min-w-0">
-          <div className="font-vremena text-base tracking-[-0.04em]">
-            This weeks <em className="text-black/50">selection</em>
-          </div>
-          <div className="font-vremena text-[10px] uppercase tracking-[-0.02em] text-black/40 mt-1 mb-4 lg:mb-6">
-            Curated by the AGMNT buying desk
-          </div>
-
-          <nav
-            className="flex flex-row lg:flex-col gap-2 lg:gap-0 overflow-x-auto lg:overflow-x-visible scrollbar-hide -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 pb-1 lg:pb-0"
-          >
-            {filterCollections.map((c) => (
-              <Link
-                key={c.handle}
-                href={c.path}
-                className="flex items-center justify-between gap-2 lg:gap-0 flex-shrink-0 lg:flex-shrink whitespace-nowrap lg:whitespace-normal px-3 py-2 lg:px-0 lg:py-1.5 border lg:border-0 border-black/15 lg:border-b lg:border-black/10 lg:rounded-none font-vremena text-[11px] tracking-[-0.02em] hover:text-black text-black/70"
-              >
-                <span className="capitalize">{c.title}</span>
-                <span className="text-black/40">→</span>
-              </Link>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Product grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 min-w-0">
-          {featured.map((p, i) => (
-            <ShopCard key={p.handle} product={p} index={i} />
-          ))}
-        </div>
-      </div>
-    </section>
+      <SelectionGrid
+        categories={categoryCollections.map((c) => ({
+          handle: c.handle,
+          title: c.title,
+          path: c.path,
+        }))}
+        products={featured}
+      />
+    </div>
   );
 }

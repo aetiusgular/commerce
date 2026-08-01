@@ -39,6 +39,12 @@ export const getBlogArticlesQuery = /* GraphQL */ `
             category: metafield(namespace: "custom", key: "category") {
               value
             }
+            season: metafield(namespace: "custom", key: "season") {
+              value
+            }
+            location: metafield(namespace: "custom", key: "location") {
+              value
+            }
             readTime: metafield(namespace: "custom", key: "read_time") {
               value
             }
@@ -81,6 +87,15 @@ export const getArticleQuery = /* GraphQL */ `
           value
         }
         photography: metafield(namespace: "custom", key: "photography") {
+          value
+        }
+        styling: metafield(namespace: "custom", key: "styling") {
+          value
+        }
+        location: metafield(namespace: "custom", key: "location") {
+          value
+        }
+        season: metafield(namespace: "custom", key: "season") {
           value
         }
         readTime: metafield(namespace: "custom", key: "read_time") {

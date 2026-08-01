@@ -42,8 +42,10 @@ function CartRow({ item, index }: { item: CartItem; index: number }) {
 
   const changeQty = (delta: number) => {
     if (item.quantity + delta < 1) return;
-    updateCartItem(item.merchandise.id, delta > 0 ? "plus" : "minus");
+    // Optimistic update + server action must be in the SAME transition, or
+    // React 19 throws "optimistic state update outside a transition".
     start(() => {
+      updateCartItem(item.merchandise.id, delta > 0 ? "plus" : "minus");
       updateItemQuantity(null, {
         merchandiseId: item.merchandise.id,
         quantity: item.quantity + delta,
@@ -52,8 +54,8 @@ function CartRow({ item, index }: { item: CartItem; index: number }) {
   };
 
   const remove = () => {
-    updateCartItem(item.merchandise.id, "delete");
     start(() => {
+      updateCartItem(item.merchandise.id, "delete");
       removeItem(null, item.merchandise.id);
     });
   };
@@ -190,9 +192,9 @@ function Summary({ cart }: { cart: Cart }) {
 function Empty() {
   return (
     <div className="empty">
-      <div className="em-mark">Your bag — 00</div>
+      <div className="em-mark">Your cart — 00</div>
       <h2>
-        Your bag is <em>empty</em>
+        Your cart is <em>empty</em>
       </h2>
       <p>Nothing here yet. The new season is waiting.</p>
       <Link className="go" href="/shop">

@@ -71,13 +71,30 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
 
                 <ul className="flex w-full flex-col">
                   <li className="py-2 text-xl text-black transition-colors hover:opacity-60">
-                    <Link href="/shop" prefetch={true} onClick={closeMobileMenu}>
+                    <Link
+                      href="/shop"
+                      prefetch={true}
+                      onClick={closeMobileMenu}
+                    >
                       SHOP
                     </Link>
                   </li>
                   <li className="py-2 text-xl text-black transition-colors hover:opacity-60">
-                    <Link href="/installations" prefetch={true} onClick={closeMobileMenu}>
+                    <Link
+                      href="/installations"
+                      prefetch={true}
+                      onClick={closeMobileMenu}
+                    >
                       INSTALLATIONS
+                    </Link>
+                  </li>
+                  <li className="py-2 text-xl text-black transition-colors hover:opacity-60">
+                    <Link
+                      href="/editorial"
+                      prefetch={true}
+                      onClick={closeMobileMenu}
+                    >
+                      EDITORIAL
                     </Link>
                   </li>
                   {menu.map((item: Menu) => (
