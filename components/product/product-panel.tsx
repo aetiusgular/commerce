@@ -5,7 +5,7 @@ import { useCart } from "components/cart/cart-context";
 import { trackAddToCart } from "lib/analytics";
 import type { Product, ProductVariant } from "lib/shopify/types";
 import { colorHex, discountPercent, isOnSale, parseKeyValues } from "lib/utils";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 const lc = (s: string) => s.trim().toLowerCase();
 
@@ -73,7 +73,7 @@ const fitPercent = (fit: string | number | undefined): number => {
 
 export function ProductPanel({ product }: { product: Product }) {
   const { addCartItem } = useCart();
-  const formRef = useRef<HTMLFormElement>(null);
+  const [, startAdd] = useTransition();
 
   const colorOption = product.options.find(
     (o) => lc(o.name) === "color" || lc(o.name) === "colour",
@@ -241,45 +241,41 @@ export function ProductPanel({ product }: { product: Product }) {
           </>
         )}
 
-        {/* Add to cart. The form runs the server mutation; the optimistic
-            cart update happens in addToCart's onClick. */}
-        <form
-          ref={formRef}
-          action={async () => {
-            if (!canAdd || !variant) return;
-            // Optimistic add + track + server action, all inside the form
-            // action (React 19 requires optimistic updates inside an action).
-            addCartItem(variant, product);
-            trackAddToCart({
-              id: variant.id,
-              title: product.title,
-              value: parseFloat(variant.price.amount),
-              currency: variant.price.currencyCode,
-            });
-            await addItem(null, variant.id);
-            setAdded(true);
-            setTimeout(() => setAdded(false), 1800);
-          }}
-        >
-          <div className="buy">
-            <button
-              type="submit"
-              className={`atc ${added ? "added" : ""} ${canAdd ? "" : "disabled"}`}
-              disabled={!canAdd}
-            >
-              {added
-                ? "✓ Added to cart"
-                : needsSize
-                  ? "Select a size"
-                  : variant?.availableForSale
-                    ? "Add to cart"
-                    : "Sold out"}
-            </button>
-          </div>
-        </form>
+        {/* Add to cart. onClick + a transition (rather than a form action,
+            which fired unreliably on mobile). The optimistic cart update must
+            run inside the transition — React 19 throws otherwise. */}
+        <div className="buy">
+          <button
+            type="button"
+            className={`atc ${added ? "added" : ""} ${canAdd ? "" : "disabled"}`}
+            disabled={!canAdd}
+            onClick={() => {
+              if (!canAdd || !variant) return;
+              startAdd(async () => {
+                addCartItem(variant, product);
+                trackAddToCart({
+                  id: variant.id,
+                  title: product.title,
+                  value: parseFloat(variant.price.amount),
+                  currency: variant.price.currencyCode,
+                });
+                await addItem(null, variant.id);
+              });
+              setAdded(true);
+              setTimeout(() => setAdded(false), 1800);
+            }}
+          >
+            {added
+              ? "✓ Added to cart"
+              : needsSize
+                ? "Select a size"
+                : variant?.availableForSale
+                  ? "Add to cart"
+                  : "Sold out"}
+          </button>
+        </div>
 
         <div className="assist">
-          <span>Complimentary shipping</span>
           <span>30-day returns</span>
         </div>
 
