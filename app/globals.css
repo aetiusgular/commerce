@@ -3061,35 +3061,52 @@ video::-webkit-media-controls-play-button {
     display: block;
     border-top: none;
   }
+  /* Mobile gallery: one big active image (like desktop) with a horizontal,
+     swipeable thumbnail strip below it — instead of a tall vertical run of
+     every image the shopper has to scroll past to reach the details. */
   .agmnt-pdp .gallery2 {
-    display: block;
-    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 12px 4px;
     border-right: none;
   }
-  .agmnt-pdp .thumbs {
-    display: none;
+  .agmnt-pdp .stage {
+    order: 1;
+    gap: 0;
   }
-  .agmnt-pdp .stage-main,
+  .agmnt-pdp .stage-track,
   .agmnt-pdp .stage-strip {
     display: none;
   }
-  .agmnt-pdp .stage-track {
+  .agmnt-pdp .stage-main {
+    display: block;
+  }
+  .agmnt-pdp .thumbs {
+    order: 2;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
+    position: static;
+    top: auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  .agmnt-pdp .stage-slide {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 3/4;
-    border: 1px solid var(--hairline);
-    overflow: hidden;
-    background: var(--bg-2);
+  /* Auto margins on the first/last thumb centre the row when it fits, yet stay
+     fully scrollable (no clipped first thumb) once the images overflow. */
+  .agmnt-pdp .thumbs .thumb:first-child {
+    margin-left: auto;
   }
-  .agmnt-pdp .stage-slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .agmnt-pdp .thumbs .thumb:last-child {
+    margin-right: auto;
+  }
+  .agmnt-pdp .thumbs::-webkit-scrollbar {
+    display: none;
+  }
+  .agmnt-pdp .thumb {
+    flex: 0 0 auto;
+    width: 58px;
   }
   .agmnt-pdp .info2 {
     padding: 24px 16px 40px;
