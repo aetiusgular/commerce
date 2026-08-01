@@ -14,13 +14,21 @@ import { redirect } from "next/navigation";
 
 export async function addItem(
   prevState: any,
-  selectedVariantId: string | undefined
+  selectedVariantId: string | undefined,
 ) {
   if (!selectedVariantId) {
     return "Error adding item to cart";
   }
 
   try {
+    // A first-time visitor (e.g. a fresh phone) has no cartId cookie yet — the
+    // old cart modal used to create one via createCartAndSetCookie on mount,
+    // but it's no longer rendered. Create the cart lazily on the first add so
+    // add-to-cart works on any device, not just ones with a pre-existing cart.
+    if (!(await cookies()).get("cartId")?.value) {
+      const cart = await createCart();
+      (await cookies()).set("cartId", cart.id!);
+    }
     await addToCart([{ merchandiseId: selectedVariantId, quantity: 1 }]);
     updateTag(TAGS.cart);
   } catch (e) {
@@ -37,7 +45,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
     }
 
     const lineItem = cart.lines.find(
-      (line) => line.merchandise.id === merchandiseId
+      (line) => line.merchandise.id === merchandiseId,
     );
 
     if (lineItem && lineItem.id) {
@@ -56,7 +64,7 @@ export async function updateItemQuantity(
   payload: {
     merchandiseId: string;
     quantity: number;
-  }
+  },
 ) {
   const { merchandiseId, quantity } = payload;
 
@@ -68,7 +76,7 @@ export async function updateItemQuantity(
     }
 
     const lineItem = cart.lines.find(
-      (line) => line.merchandise.id === merchandiseId
+      (line) => line.merchandise.id === merchandiseId,
     );
 
     if (lineItem && lineItem.id) {
