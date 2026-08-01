@@ -1,40 +1,80 @@
-import { getArticles } from "lib/shopify";
-import { ArticleCard } from "./article-card";
+import { getEditorials } from "lib/shopify";
+import Image from "next/image";
+import Link from "next/link";
 import { RadioPlayer } from "./radio-player";
 import { SectionHead } from "./section-head";
 
+const fmtDate = (s: string): string => {
+  const d = new Date(s);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${String(d.getFullYear()).slice(2)}`;
+};
+
+/**
+ * 03 / Editorial — the two most recent campaign folios + AGMNT Radio.
+ * Same layout as the v6 reference (.ed / .ec), content sourced from the
+ * Editorial (campaign) blog rather than written articles.
+ */
 export async function Dispatch() {
-  const articles = await getArticles();
-  const featured = articles.slice(0, 2);
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentCount = articles.filter(
-    (a) => new Date(a.publishedAt).getTime() >= sevenDaysAgo
-  ).length;
+  const campaigns = await getEditorials();
+  const featured = campaigns.slice(0, 2);
 
   return (
-    <section id="editorial">
+    <div className="agmnt-home">
       <SectionHead
         num="03"
-        title="Installations"
-        count={`This week's reading · ${recentCount} stories`}
-        linkText="All stories →"
-        linkHref="/installations"
+        title="Editorial"
+        count={`${campaigns.length} campaign${campaigns.length === 1 ? "" : "s"}`}
+        linkText="View all →"
+        linkHref="/editorial"
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10 px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-6">
+      <section className="ed" id="editorial">
         {featured.length === 0 ? (
-          <div className="md:col-span-2 font-vremena text-sm text-black/50">
-            No articles yet — check back soon.
-          </div>
+          <div className="ec ec-empty" />
         ) : (
-          featured.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+          featured.map((c) => (
+            <article className="ec" key={c.id}>
+              <Link className="ec-img" href={`/editorial/${c.handle}`}>
+                {c.image?.url && (
+                  <Image
+                    src={c.image.url}
+                    alt={c.image.altText || c.title}
+                    fill
+                    sizes="(min-width: 1180px) 33vw, 100vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                )}
+              </Link>
+              <div className="ec-meta">
+                <span className="c">{c.category || "Campaign"}</span>
+                <span>·</span>
+                <span>{fmtDate(c.publishedAt)}</span>
+                {c.location && (
+                  <>
+                    <span>·</span>
+                    <span>{c.location}</span>
+                  </>
+                )}
+              </div>
+              <h3>
+                <Link href={`/editorial/${c.handle}`}>
+                  {c.season ? `${c.title} — ${c.season}` : c.title}
+                </Link>
+              </h3>
+              {c.photography && (
+                <div className="ec-by">
+                  Photography <b>{c.photography}</b>
+                </div>
+              )}
+            </article>
           ))
         )}
-        <div id="radio" className="md:col-span-2 lg:col-span-1">
+
+        <div id="radio" className="ec-radio">
           <RadioPlayer />
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

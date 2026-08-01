@@ -134,7 +134,7 @@ function CartModalContent({
           <Dialog.Panel className="font-vremena fixed top-0 right-0 bottom-0 flex h-full w-full flex-col border-l border-black/10 bg-white text-black md:w-[400px]">
             <div className="flex items-center justify-between border-b border-black/10 px-6 py-5">
               <p className="text-xs font-medium tracking-[0.16em] uppercase">
-                Bag ({cart?.totalQuantity || 0})
+                Cart ({cart?.totalQuantity || 0})
               </p>
               <button
                 aria-label="Close cart"
@@ -148,7 +148,7 @@ function CartModalContent({
             {!cart || cart.lines.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
                 <p className="text-xs tracking-[0.16em] text-black/50 uppercase">
-                  Your bag is empty
+                  Your cart is empty
                 </p>
                 <button
                   onClick={closeCart}

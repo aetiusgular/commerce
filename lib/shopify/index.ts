@@ -640,6 +640,9 @@ const reshapeArticle = (article: ShopifyArticle): Article => ({
   },
   category: article.category?.value || article.tags?.[0] || null,
   photography: article.photography?.value || null,
+  styling: article.styling?.value || null,
+  location: article.location?.value || null,
+  season: article.season?.value || null,
   readTime: article.readTime?.value || null,
   gallery:
     article.gallery?.references?.nodes
@@ -692,6 +695,40 @@ export async function getArticles(): Promise<Article[]> {
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     );
+}
+
+/** Handle of the blog that holds campaign / editorial photo folios. */
+export const EDITORIAL_BLOG_HANDLE = "editorial";
+
+/**
+ * Campaign / editorial folios — the articles in the dedicated "Editorial" blog.
+ * These are photo stories (gallery + credits), distinct from Installations
+ * (the written articles in every other blog).
+ */
+export async function getEditorials(): Promise<Article[]> {
+  "use cache";
+  cacheTag(TAGS.articles);
+  cacheLife("hours");
+
+  if (!endpoint) return [];
+
+  const res = await shopifyFetch<ShopifyBlogArticlesOperation>({
+    query: getBlogArticlesQuery,
+    variables: { blogHandle: EDITORIAL_BLOG_HANDLE },
+  });
+
+  if (!res.body.data.blog) return [];
+
+  return removeEdgesAndNodes(res.body.data.blog.articles).map(reshapeArticle);
+}
+
+/**
+ * Installations — the written articles, i.e. every blog EXCEPT the Editorial
+ * (campaign) blog. Same shape as getArticles, newest first.
+ */
+export async function getInstallations(): Promise<Article[]> {
+  const all = await getArticles();
+  return all.filter((a) => a.blog.handle !== EDITORIAL_BLOG_HANDLE);
 }
 
 // Finds a single article by its handle, searching across all blogs.

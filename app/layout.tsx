@@ -1,7 +1,6 @@
 import { MetaPixel } from "components/analytics/meta-pixel";
 import { CartProvider } from "components/cart/cart-context";
 import { Navbar } from "components/layout/navbar";
-import { PersistentHero } from "components/layout/persistent-hero";
 import { SaleBanner } from "components/layout/sale-banner";
 import { getCart, getSaleBanner, getShopMetafield } from "lib/shopify";
 import { baseUrl } from "lib/utils";
@@ -120,9 +119,6 @@ export default async function RootLayout({
         <CartProvider cartPromise={cart}>
           <SaleBanner banner={saleBanner} />
           <Navbar />
-          {/* Persistent hero — mounted once on first home visit, kept in DOM
-              across navigations so returning to home is flash-free. */}
-          <PersistentHero videoUrl={videoUrl} />
           <main>
             {children}
             <Toaster closeButton />

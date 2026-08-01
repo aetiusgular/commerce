@@ -1,12 +1,18 @@
 import type { Product } from "lib/shopify/types";
-import { formatMoney, isOnSale, productPath } from "lib/utils";
+import {
+  discountPercent,
+  formatMoney,
+  isOnSale,
+  productPath,
+} from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
 /**
- * Shop grid card (SS26 reference): large borderless image with a hover
- * second-image crossfade and an "Add to bag" overlay, then brand over product
- * name and the price (muted; sale shows a struck original + red price).
+ * Shop grid card — v7 `.pc`: image (3/4) with a hover second-image crossfade and
+ * a NEW / LAST PAIR corner tag, then brand (+ "· N% off" on sale), the product
+ * name, and a price row (struck original + now) with a "View more" link to the
+ * PDP. Scoped under `.agmnt-shop` so it doesn't collide with the home `.pc`.
  */
 export function ShopCard({ product }: { product: Product; index?: number }) {
   const href = productPath(product);
@@ -14,24 +20,27 @@ export function ShopCard({ product }: { product: Product; index?: number }) {
   const price = product.priceRange.minVariantPrice;
   const compareAt = product.compareAtPriceRange?.minVariantPrice ?? null;
   const onSale = isOnSale(compareAt, price);
-  const isNew = product.tags?.some((t) => t.toLowerCase() === "new");
+  const off = discountPercent(compareAt, price);
 
-  // Second product image, revealed on hover (CSS-only fade, no JS).
+  const tags = product.tags ?? [];
+  const tag = tags.some((t) => t.toLowerCase() === "last pair")
+    ? "Last pair"
+    : tags.some((t) => t.toLowerCase() === "new")
+      ? "New"
+      : null;
+
+  // Second product image, revealed on hover (CSS-only crossfade).
   const hoverImage = product.images?.find(
     (img) => img.url !== product.featuredImage?.url,
   );
 
   return (
-    <article className="scard">
-      <Link href={href} className="scard-img" aria-label={product.title}>
-        {onSale ? (
-          <span className="tag sale">Sale</span>
-        ) : isNew ? (
-          <span className="tag new">New</span>
-        ) : null}
-        {product.featuredImage?.url ? (
+    <article className="pc">
+      <Link href={href} className="pc-img" aria-label={product.title}>
+        {tag && <span className="pc-tag">{tag}</span>}
+        {product.featuredImage?.url && (
           <Image
-            className="scard-base"
+            className="pc-base"
             src={product.featuredImage.url}
             alt={
               product.featuredImage.altText ||
@@ -40,36 +49,43 @@ export function ShopCard({ product }: { product: Product; index?: number }) {
                 : product.title)
             }
             fill
-            sizes="(min-width: 900px) 30vw, 50vw"
+            sizes="(min-width: 1180px) 22vw, (min-width: 820px) 30vw, 50vw"
+            style={{ objectFit: "cover" }}
           />
-        ) : null}
+        )}
         {hoverImage?.url && (
           <Image
-            className="scard-hover"
+            className="pc-hover"
             src={hoverImage.url}
             alt=""
             aria-hidden="true"
             fill
-            sizes="(min-width: 900px) 30vw, 50vw"
+            sizes="(min-width: 1180px) 22vw, (min-width: 820px) 30vw, 50vw"
+            style={{ objectFit: "cover" }}
           />
         )}
       </Link>
 
-      <Link href={href} className="scard-name">
-        {product.vendor && (
-          <span className="scard-brand">{product.vendor}</span>
-        )}
-        <span className="scard-title">{product.title}</span>
+      <div className="pc-meta">
+        {product.vendor && <span className="pc-brand">{product.vendor}</span>}
+        {onSale && off > 0 && <span className="off"> · {off}% off</span>}
+      </div>
+
+      <Link href={href} className="pc-name">
+        <b>{product.title}</b>
       </Link>
 
-      {onSale && compareAt ? (
-        <div className="scard-price sale agmnt-tnum">
-          <span className="was">{formatMoney(compareAt)}</span>
-          <span className="now">{formatMoney(price)}</span>
-        </div>
-      ) : (
-        <div className="scard-price agmnt-tnum">{formatMoney(price)}</div>
-      )}
+      <div className="pc-foot">
+        <span className="pc-price agmnt-tnum">
+          {onSale && compareAt && (
+            <s>{Math.round(parseFloat(compareAt.amount))}</s>
+          )}
+          {formatMoney(price)}
+        </span>
+        <Link href={href} className="pc-add" aria-label={`View ${product.title}`}>
+          View more
+        </Link>
+      </div>
     </article>
   );
 }
