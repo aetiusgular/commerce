@@ -179,8 +179,7 @@ export function EditorialIndex({
 
       {folios.length === 0 ? (
         <div style={{ padding: "44px 30px", color: "#8a8a85", fontSize: 14 }}>
-          No campaigns yet — add a post to the Editorial blog on Shopify (title,
-          category, credits, and a Gallery of photos) and it will appear here.
+          No campaigns yet
         </div>
       ) : view === "gallery" ? (
         folios.map((f) => <FolioBlock f={f} key={f.n} />)
