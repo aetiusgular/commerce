@@ -131,3 +131,32 @@ export function applyShopFilters(
 
   return list;
 }
+
+/** Filter state parsed from the shop URL and handed to the client browser. */
+export type InitialShopFilters = {
+  designers?: string[];
+  cats?: string[];
+  colors?: string[];
+  sale?: boolean;
+  min?: number;
+  max?: number;
+  sort?: string;
+};
+
+const toArr = (v: string | string[] | undefined): string[] =>
+  Array.isArray(v) ? v : v ? [v] : [];
+
+/** Parse a Next searchParams object into the shop browser's initial filters. */
+export function initialFromParams(sp: {
+  [key: string]: string | string[] | undefined;
+}): InitialShopFilters {
+  return {
+    designers: toArr(sp.designer),
+    cats: toArr(sp.category),
+    colors: toArr(sp.color),
+    sale: sp.sale === "1",
+    min: typeof sp.min === "string" ? Number(sp.min) : undefined,
+    max: typeof sp.max === "string" ? Number(sp.max) : undefined,
+    sort: typeof sp.sort === "string" ? sp.sort : undefined,
+  };
+}

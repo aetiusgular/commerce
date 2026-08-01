@@ -1,10 +1,5 @@
 import type { Product } from "lib/shopify/types";
-import {
-  discountPercent,
-  formatMoney,
-  isOnSale,
-  productPath,
-} from "lib/utils";
+import { discountPercent, formatMoney, isOnSale, productPath } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,7 +9,14 @@ import Link from "next/link";
  * name, and a price row (struck original + now) with a "View more" link to the
  * PDP. Scoped under `.agmnt-shop` so it doesn't collide with the home `.pc`.
  */
-export function ShopCard({ product }: { product: Product; index?: number }) {
+export function ShopCard({
+  product,
+  brandHref,
+}: {
+  product: Product;
+  index?: number;
+  brandHref?: string;
+}) {
   const href = productPath(product);
 
   const price = product.priceRange.minVariantPrice;
@@ -67,7 +69,14 @@ export function ShopCard({ product }: { product: Product; index?: number }) {
       </Link>
 
       <div className="pc-meta">
-        {product.vendor && <span className="pc-brand">{product.vendor}</span>}
+        {product.vendor &&
+          (brandHref ? (
+            <Link className="pc-brand" href={brandHref}>
+              {product.vendor}
+            </Link>
+          ) : (
+            <span className="pc-brand">{product.vendor}</span>
+          ))}
         {onSale && off > 0 && <span className="off"> · {off}% off</span>}
       </div>
 
@@ -82,7 +91,11 @@ export function ShopCard({ product }: { product: Product; index?: number }) {
           )}
           {formatMoney(price)}
         </span>
-        <Link href={href} className="pc-add" aria-label={`View ${product.title}`}>
+        <Link
+          href={href}
+          className="pc-add"
+          aria-label={`View ${product.title}`}
+        >
           View more
         </Link>
       </div>

@@ -503,7 +503,8 @@ video::-webkit-media-controls-play-button {
   letter-spacing: inherit;
   color: inherit;
 }
-.agmnt-shop a.pc-name:hover b {
+.agmnt-shop a.pc-name:hover b,
+.agmnt-shop a.pc-brand:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
