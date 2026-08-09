@@ -9,9 +9,25 @@ import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 
+// Vremena Grotesk, loaded per weight/style so 500/700 and italics render as
+// their true cuts instead of browser-synthesized faux bold/italic.
 const vremena = localFont({
-  src: "../fonts/vremenagroteskbook.otf",
+  src: [
+    { path: "../fonts/vremenagroteskbook.otf", weight: "400", style: "normal" },
+    {
+      path: "../fonts/vremenagroteskmedium.otf",
+      weight: "500",
+      style: "normal",
+    },
+    { path: "../fonts/vremenagroteskbold.otf", weight: "700", style: "normal" },
+    {
+      path: "../fonts/vremenagroteskbookitalic.otf",
+      weight: "400",
+      style: "italic",
+    },
+  ],
   variable: "--font-vremena",
+  display: "swap",
 });
 
 const { SITE_NAME } = process.env;
