@@ -65,10 +65,14 @@ export function ShopBrowser({
   products,
   initial,
   brandHrefs,
+  brandNotes,
 }: {
   products: Product[];
   initial?: InitialShopFilters;
   brandHrefs?: Record<string, string>;
+  /** House descriptions sourced from Shopify collection descriptions, keyed by
+   * vendor. Falls back to the local BRANDS map when Shopify has none. */
+  brandNotes?: Record<string, string>;
 }) {
   const facets = useMemo(() => computeFacets(products), [products]);
 
@@ -183,17 +187,10 @@ export function ShopBrowser({
   // When the shopper has narrowed to exactly one house, surface its editorial
   // header above the grid (the SEO brand page's on-site treatment).
   const brand = f.designers.length === 1 ? f.designers[0]! : null;
-  const brandInfo = brand ? BRANDS[brand] : null;
-  const brandStats = useMemo(() => {
-    if (!brand) return null;
-    const items = products.filter((p) => p.vendor === brand);
-    const prices = items.map(priceNum);
-    return {
-      n: items.length,
-      from: prices.length ? Math.min(...prices) : 0,
-      sale: items.filter(productIsOnSale).length,
-    };
-  }, [products, brand]);
+  const brandInfo = brand ? BRANDS[brand] : undefined;
+  // Description prefers the live Shopify collection description (editable in
+  // Shopify admin); falls back to the local BRANDS map if Shopify has none.
+  const brandNote = brand ? brandNotes?.[brand] || brandInfo?.note : null;
 
   const count = (dim: Dim, v: string) =>
     products.filter((p) => matches(p, dim) && hit(p, dim, v)).length;
@@ -515,7 +512,7 @@ export function ShopBrowser({
         </aside>
 
         <div className="lay-main">
-          {brand && brandStats && (
+          {brand && brandNote && (
             <section className="bnote">
               <div className="bnote-t">
                 <h2>
@@ -526,37 +523,7 @@ export function ShopBrowser({
                   )}
                 </h2>
               </div>
-              {brandInfo?.note && <p>{brandInfo.note}</p>}
-              <div className="bnote-m mono">
-                {brandInfo?.est && (
-                  <>
-                    <span>Est. {brandInfo.est}</span>
-                    <span className="sl">/</span>
-                  </>
-                )}
-                {brandInfo?.city && (
-                  <>
-                    <span>{brandInfo.city}</span>
-                    <span className="sl">/</span>
-                  </>
-                )}
-                <span>
-                  {brandStats.n} {brandStats.n === 1 ? "piece" : "pieces"}
-                </span>
-                <span className="sl">/</span>
-                <span>From {brandStats.from} USD</span>
-                {brandStats.sale > 0 && (
-                  <>
-                    <span className="sl">/</span>
-                    <button
-                      className="bnote-sale"
-                      onClick={() => setF((s) => ({ ...s, sale: true }))}
-                    >
-                      {brandStats.sale} on sale
-                    </button>
-                  </>
-                )}
-              </div>
+              <p>{brandNote}</p>
             </section>
           )}
           <div className="ghead">

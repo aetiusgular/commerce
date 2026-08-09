@@ -47,6 +47,13 @@ export default async function CategoryPage(props: {
 
   const title = collection?.title ?? params.collection;
 
+  // On a brand page the collection's own Shopify description is the house note,
+  // so a designer-filtered header shows the same live copy as the main shop.
+  const brandNotes: Record<string, string> = {};
+  if (isBrand && raw.designers[0] && collection?.description?.trim()) {
+    brandNotes[raw.designers[0]] = collection.description.trim();
+  }
+
   return (
     <>
       <nav className="shop-crumb">
@@ -82,7 +89,11 @@ export default async function CategoryPage(props: {
           <a href="/shop">Back to shop →</a>
         </div>
       ) : (
-        <ShopBrowser products={products} initial={initialFromParams(sp)} />
+        <ShopBrowser
+          products={products}
+          initial={initialFromParams(sp)}
+          brandNotes={brandNotes}
+        />
       )}
     </>
   );
