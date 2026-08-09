@@ -33,16 +33,18 @@ export default async function ShopPage(props: {
   ]);
   const products = q ? applyShopFilters(all, { q }) : all;
 
-  // Map each designer to its brand collection page (an automated Vendor=X
-  // collection), matched by slug. This turns the brand name on every card and
-  // the house header into a crawlable internal link to the SEO brand page.
+  // Map each designer to its brand collection: the href powers the crawlable
+  // internal link on cards + header, and the description (edited in Shopify, not
+  // hardcoded) is the house note shown under the brand name in the rail header.
   const brandHrefs: Record<string, string> = {};
+  const brandNotes: Record<string, string> = {};
   for (const v of computeFacets(all).designers) {
     const vslug = slugify(v);
     const match = collections.find(
       (c) => c.handle === vslug || slugify(c.title) === vslug,
     );
     if (match?.handle) brandHrefs[v] = `/shop/${match.handle}`;
+    if (match?.description?.trim()) brandNotes[v] = match.description.trim();
   }
 
   return (
@@ -50,6 +52,7 @@ export default async function ShopPage(props: {
       products={products}
       initial={initialFromParams(sp)}
       brandHrefs={brandHrefs}
+      brandNotes={brandNotes}
     />
   );
 }
