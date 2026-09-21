@@ -5054,3 +5054,59 @@ video::-webkit-media-controls-play-button {
 .agmnt-home .pc:hover .pc-hover {
   opacity: 1;
 }
+
+/* ---- Description: Details list + Materials, and the cm/in unit toggle ---- */
+.agmnt-pdp .desc-sec {
+  margin-top: 20px;
+}
+.agmnt-pdp .desc-sec-h {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.agmnt-pdp .desc-list {
+  list-style: disc;
+  padding-left: 18px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.agmnt-pdp .desc-list li {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  max-width: 46ch;
+  padding-left: 2px;
+}
+.agmnt-pdp .desc-list li::marker {
+  color: var(--muted-2);
+}
+.agmnt-pdp .unit-toggle {
+  display: inline-flex;
+  margin-top: 18px;
+  border: 1px solid var(--ink);
+}
+.agmnt-pdp .unit-toggle button {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 5px 15px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+.agmnt-pdp .unit-toggle button + button {
+  border-left: 1px solid var(--ink);
+}
+.agmnt-pdp .unit-toggle button.active {
+  background: var(--ink);
+  color: var(--bg);
+}

@@ -71,6 +71,53 @@ const fitPercent = (fit: string | number | undefined): number => {
   return map[String(fit ?? "true").toLowerCase()] ?? 50;
 };
 
+/**
+ * Splits our product description HTML into a lead sentence and a list of
+ * detail bullets, dropping the legacy "Item Info:" heading. Regex-based so it
+ * behaves identically on the server and the client (no DOM needed).
+ */
+function splitDescription(html: string): { lead: string; bullets: string[] } {
+  if (!html) return { lead: "", bullets: [] };
+  // Drop the legacy "Item Info:" heading paragraph.
+  let h = html.replace(
+    /<p[^>]*>(?:\s|<[^>]+>)*Item\s*Info:(?:\s|<\/[^>]+>)*<\/p>/i,
+    "",
+  );
+  // Collect bullet text, then strip the list so it isn't repeated in the lead.
+  const bullets: string[] = [];
+  const liRe = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = liRe.exec(h)) !== null) {
+    const text = (m[1] ?? "")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text) bullets.push(text);
+  }
+  h = h.replace(/<ul[\s\S]*?<\/ul>/gi, "").replace(/<ol[\s\S]*?<\/ol>/gi, "");
+  const lead = h
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return { lead, bullets };
+}
+
+/**
+ * Converts one measurement cell to the chosen unit. Non-numeric cells (size
+ * labels, blanks) pass through untouched; inches round to the nearest half.
+ */
+function convertMeasure(cell: string, unit: "cm" | "in"): string {
+  if (unit === "cm") return cell;
+  const n = parseFloat(cell);
+  if (!cell || Number.isNaN(n)) return cell;
+  const inches = Math.round((n / 2.54) * 2) / 2;
+  return Number.isInteger(inches) ? String(inches) : inches.toFixed(1);
+}
+
 export function ProductPanel({ product }: { product: Product }) {
   const { addCartItem } = useCart();
   const [, startAdd] = useTransition();
@@ -86,6 +133,7 @@ export function ProductPanel({ product }: { product: Product }) {
   const [size, setSize] = useState("");
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
+  const [unit, setUnit] = useState<"cm" | "in">("cm");
   const [accs, setAccs] = useState({
     desc: true,
     meas: false,
@@ -136,6 +184,18 @@ export function ProductPanel({ product }: { product: Product }) {
   const sizeFitRows = sizeFitData
     ? null
     : parseKeyValues(product.sizeFit?.value);
+
+  // Description split into a lead sentence + a "Details" bullet list. When the
+  // composition is shown in the Materials rows below, drop the material bullet
+  // (anything with a percentage) so it isn't listed twice.
+  const desc = splitDescription(product.descriptionHtml ?? "");
+  const hasMaterialSpec = Boolean(
+    details?.some((r) => /material|lining|fabric|insulation/i.test(r.label)),
+  );
+  const detailBullets = hasMaterialSpec
+    ? desc.bullets.filter((b) => !/\d\s*%/.test(b))
+    : desc.bullets;
+  const leadText = desc.lead || product.description || "";
 
   return (
     <div className="info2">
@@ -286,22 +346,30 @@ export function ProductPanel({ product }: { product: Product }) {
             open={accs.desc}
             onToggle={() => toggle("desc")}
           >
-            {product.descriptionHtml ? (
-              <div
-                dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
-              />
-            ) : product.description ? (
-              <p className="lead">{product.description}</p>
+            {leadText ? (
+              <p className="lead">{leadText}</p>
             ) : (
               <p className="lead" style={{ opacity: 0.5 }}>
                 No description available.
               </p>
             )}
+            {detailBullets.length > 0 && (
+              <div className="desc-sec">
+                <div className="desc-sec-h">Details</div>
+                <ul className="desc-list">
+                  {detailBullets.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {details && (
               <dl className="spec">
                 {details.map((r) => (
                   <div className="spec-row" key={r.label}>
-                    <dt>{r.label}</dt>
+                    <dt>
+                      {/^materials?$/i.test(r.label) ? "Materials" : r.label}
+                    </dt>
                     <dd>{r.value}</dd>
                   </div>
                 ))}
@@ -352,24 +420,57 @@ export function ProductPanel({ product }: { product: Product }) {
                     <p className="fit-note">{sizeFitData.note}</p>
                   )}
                   {sizeFitData.columns && sizeFitData.rows && (
-                    <table className="measure">
-                      <thead>
-                        <tr>
-                          {sizeFitData.columns.map((c) => (
-                            <th key={c}>{c}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sizeFitData.rows.map((row, i) => (
-                          <tr key={i}>
-                            {row.map((cell, j) => (
-                              <td key={j}>{cell}</td>
+                    <>
+                      <div
+                        className="unit-toggle"
+                        role="group"
+                        aria-label="Measurement units"
+                      >
+                        <button
+                          type="button"
+                          className={unit === "cm" ? "active" : ""}
+                          aria-pressed={unit === "cm"}
+                          onClick={() => setUnit("cm")}
+                        >
+                          cm
+                        </button>
+                        <button
+                          type="button"
+                          className={unit === "in" ? "active" : ""}
+                          aria-pressed={unit === "in"}
+                          onClick={() => setUnit("in")}
+                        >
+                          in
+                        </button>
+                      </div>
+                      <table className="measure">
+                        <thead>
+                          <tr>
+                            {sizeFitData.columns.map((c, j) => (
+                              <th key={c}>
+                                {j === 0 || unit === "cm"
+                                  ? c
+                                  : c.replace(/\bcm\b/gi, "in")}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {sizeFitData.rows.map((row, i) => (
+                            <tr key={i}>
+                              {row.map((cell, j) => (
+                                <td key={j}>
+                                  {j === 0 ? cell : convertMeasure(cell, unit)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="mnote">
+                        Measured flat. Allow slight variance.
+                      </div>
+                    </>
                   )}
                   {sizeFitData.guide && (
                     <a
