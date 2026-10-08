@@ -9,11 +9,18 @@ import { type FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Search, { SearchSkeleton } from "./search";
 
-const LINKS = [
+type NavLink = { href: string; label: string; n: string; hidden?: boolean };
+
+// Set `hidden: true` to pull a link from the nav (desktop + mobile) without
+// deleting it. The route itself stays live. Editorial is hidden for now —
+// remove the flag to bring it back.
+const ALL_LINKS: NavLink[] = [
   { href: "/shop", label: "Shop", n: "01" },
   { href: "/installations", label: "Installations", n: "02" },
-  { href: "/editorial", label: "Editorial", n: "03" },
+  { href: "/editorial", label: "Editorial", n: "03", hidden: true },
 ];
+
+const LINKS = ALL_LINKS.filter((l) => !l.hidden);
 
 /**
  * Navbar — v6 "Left lockup" desktop + the mobile kit (≤900px): a 52px bar

@@ -118,6 +118,77 @@ function convertMeasure(cell: string, unit: "cm" | "in"): string {
   return Number.isInteger(inches) ? String(inches) : inches.toFixed(1);
 }
 
+/** Labels in `custom.details` that describe what the garment is made of. */
+const COMPOSITION_LABEL =
+  /^(materials?|fabric|shell|body|lining|accent|contrast|insulation|padding|fill|panels?|trim)\b/i;
+
+type Fiber = { pct: string; name: string };
+type CompositionPart = { label: string; fibers: Fiber[]; text: string };
+
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/**
+ * Reads "97% polyester, 3% spandex" (or "Polyester 97% / Spandex 3%") into
+ * fibre lines. Returns [] when the value carries no percentages, in which case
+ * the caller prints the text as written (e.g. "3M Featherless Down").
+ */
+function parseFibers(value: string): Fiber[] {
+  const out: Fiber[] = [];
+  const pctFirst = /(\d+(?:\.\d+)?)\s*%\s*([^,;/%\d]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = pctFirst.exec(value)) !== null) {
+    const name = (m[2] ?? "").replace(/\band\b\s*$/i, "").trim();
+    if (name) out.push({ pct: `${m[1]}%`, name: capitalize(name) });
+  }
+  if (out.length) return out;
+  const nameFirst = /([A-Za-z][A-Za-z\s-]*?)\s+(\d+(?:\.\d+)?)\s*%/g;
+  while ((m = nameFirst.exec(value)) !== null) {
+    const name = (m[1] ?? "").replace(/^and\s+/i, "").trim();
+    if (name) out.push({ pct: `${m[2]}%`, name: capitalize(name) });
+  }
+  return out;
+}
+
+/**
+ * Splits the `custom.details` rows into garment composition parts and any
+ * other facts (Season, Made in…). Every part is optional, so a product with
+ * one fabric, no lining, or four different fabrics all render from the same
+ * rows. Repeated labels ("Accent" twice) are numbered.
+ */
+function splitDetails(rows: { label: string; value: string }[] | null): {
+  composition: CompositionPart[];
+  info: { label: string; value: string }[];
+} {
+  const composition: CompositionPart[] = [];
+  const info: { label: string; value: string }[] = [];
+  for (const r of rows ?? []) {
+    if (!r.value) continue;
+    if (COMPOSITION_LABEL.test(r.label))
+      composition.push({
+        label: r.label,
+        fibers: parseFibers(r.value),
+        text: r.value,
+      });
+    else info.push(r);
+  }
+  // "Material" reads as the outer fabric once other parts are listed.
+  if (composition.length > 1)
+    for (const c of composition)
+      if (/^(materials?|fabric|body)$/i.test(c.label)) c.label = "Shell";
+  const totals: Record<string, number> = {};
+  for (const c of composition)
+    totals[lc(c.label)] = (totals[lc(c.label)] ?? 0) + 1;
+  const seen: Record<string, number> = {};
+  for (const c of composition) {
+    const k = lc(c.label);
+    if ((totals[k] ?? 0) > 1) {
+      seen[k] = (seen[k] ?? 0) + 1;
+      c.label = `${c.label} ${seen[k]}`;
+    }
+  }
+  return { composition, info };
+}
+
 export function ProductPanel({ product }: { product: Product }) {
   const { addCartItem } = useCart();
   const [, startAdd] = useTransition();
@@ -185,17 +256,24 @@ export function ProductPanel({ product }: { product: Product }) {
     ? null
     : parseKeyValues(product.sizeFit?.value);
 
-  // Description split into a lead sentence + a "Details" bullet list. When the
-  // composition is shown in the Materials rows below, drop the material bullet
-  // (anything with a percentage) so it isn't listed twice.
+  // Description: one numbered Details list (the lead sentence is item 01) and
+  // a Composition table. When composition comes from `custom.details`, drop
+  // the material bullet (anything with a percentage) so it isn't listed twice.
   const desc = splitDescription(product.descriptionHtml ?? "");
-  const hasMaterialSpec = Boolean(
-    details?.some((r) => /material|lining|fabric|insulation/i.test(r.label)),
-  );
-  const detailBullets = hasMaterialSpec
-    ? desc.bullets.filter((b) => !/\d\s*%/.test(b))
-    : desc.bullets;
-  const leadText = desc.lead || product.description || "";
+  const { composition, info } = splitDetails(details);
+  const leadText = (
+    desc.lead ||
+    (desc.bullets.length ? "" : product.description) ||
+    ""
+  ).trim();
+  const detailItems = [
+    ...(leadText ? [leadText] : []),
+    ...(composition.length
+      ? desc.bullets.filter((b) => !/\d\s*%/.test(b))
+      : desc.bullets),
+  ];
+  const hasDescription =
+    detailItems.length > 0 || composition.length > 0 || info.length > 0;
 
   return (
     <div className="info2">
@@ -346,34 +424,60 @@ export function ProductPanel({ product }: { product: Product }) {
             open={accs.desc}
             onToggle={() => toggle("desc")}
           >
-            {leadText ? (
-              <p className="lead">{leadText}</p>
-            ) : (
+            {!hasDescription && (
               <p className="lead" style={{ opacity: 0.5 }}>
                 No description available.
               </p>
             )}
-            {detailBullets.length > 0 && (
-              <div className="desc-sec">
-                <div className="desc-sec-h">Details</div>
-                <ul className="desc-list">
-                  {detailBullets.map((b, i) => (
-                    <li key={i}>{b}</li>
+            {detailItems.length > 0 && (
+              <div className="dsec">
+                <div className="dsec-h">Details</div>
+                <ol className="dlist">
+                  {detailItems.map((b, i) => (
+                    <li key={i}>
+                      <span className="n" aria-hidden="true">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span>{b}</span>
+                    </li>
                   ))}
-                </ul>
+                </ol>
               </div>
             )}
-            {details && (
-              <dl className="spec">
-                {details.map((r) => (
-                  <div className="spec-row" key={r.label}>
-                    <dt>
-                      {/^materials?$/i.test(r.label) ? "Materials" : r.label}
-                    </dt>
-                    <dd>{r.value}</dd>
-                  </div>
-                ))}
-              </dl>
+            {composition.length > 0 && (
+              <div className="dsec">
+                <div className="dsec-h">Composition</div>
+                <dl className="comp">
+                  {composition.map((c) => (
+                    <div className="comp-row" key={c.label}>
+                      <dt>{c.label}</dt>
+                      <dd>
+                        {c.fibers.length > 0
+                          ? c.fibers.map((f, i) => (
+                              <span className="fiber" key={i}>
+                                <span className="pct">{f.pct}</span>
+                                <span>{f.name}</span>
+                              </span>
+                            ))
+                          : c.text}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            )}
+            {info.length > 0 && (
+              <div className="dsec">
+                <div className="dsec-h">Info</div>
+                <dl className="comp">
+                  {info.map((r) => (
+                    <div className="comp-row" key={r.label}>
+                      <dt>{r.label}</dt>
+                      <dd>{r.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             )}
           </Acc>
 
@@ -421,36 +525,37 @@ export function ProductPanel({ product }: { product: Product }) {
                   )}
                   {sizeFitData.columns && sizeFitData.rows && (
                     <>
-                      <div
-                        className="unit-toggle"
-                        role="group"
-                        aria-label="Measurement units"
-                      >
-                        <button
-                          type="button"
-                          className={unit === "cm" ? "active" : ""}
-                          aria-pressed={unit === "cm"}
-                          onClick={() => setUnit("cm")}
+                      <div className="measure-bar">
+                        <span className="measure-bar-label">Measured flat</span>
+                        <div
+                          className="unit-toggle"
+                          role="group"
+                          aria-label="Measurement units"
                         >
-                          cm
-                        </button>
-                        <button
-                          type="button"
-                          className={unit === "in" ? "active" : ""}
-                          aria-pressed={unit === "in"}
-                          onClick={() => setUnit("in")}
-                        >
-                          in
-                        </button>
+                          <button
+                            type="button"
+                            className={unit === "cm" ? "active" : ""}
+                            aria-pressed={unit === "cm"}
+                            onClick={() => setUnit("cm")}
+                          >
+                            cm
+                          </button>
+                          <button
+                            type="button"
+                            className={unit === "in" ? "active" : ""}
+                            aria-pressed={unit === "in"}
+                            onClick={() => setUnit("in")}
+                          >
+                            in
+                          </button>
+                        </div>
                       </div>
                       <table className="measure">
                         <thead>
                           <tr>
                             {sizeFitData.columns.map((c, j) => (
                               <th key={c}>
-                                {j === 0 || unit === "cm"
-                                  ? c
-                                  : c.replace(/\bcm\b/gi, "in")}
+                                {c.replace(/\s*\((?:cm|in)\)\s*$/i, "")}
                               </th>
                             ))}
                           </tr>
@@ -468,7 +573,7 @@ export function ProductPanel({ product }: { product: Product }) {
                         </tbody>
                       </table>
                       <div className="mnote">
-                        Measured flat. Allow slight variance.
+                        Allow 1 to 2 {unit === "cm" ? "cm" : "in"} variance.
                       </div>
                     </>
                   )}
