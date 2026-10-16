@@ -74,7 +74,7 @@ DATA LAYER
 UI (match the monochrome brand; sale accent = a single red, e.g. text-red-600)
 4. components/grid/tile.tsx — the product card label: when the product is on sale, render the compare-at amount with line-through + muted, then the sale amount in the red accent, and a small "−XX%". Also add a small "SALE" tag in the top-left of the image container. When NOT on sale, render exactly as today (single price).
 5. components/layout/product-grid-items.tsx — pass the compare-at data through to the label so tile.tsx can use it.
-6. components/product/product-description.tsx — the PDP price block: same treatment (struck original + red sale price). Keep "Taxes and duties included".
+6. components/product/product-description.tsx — the PDP price block: same treatment (struck original + red sale price). Keep "Taxes and duties paid by buyer at checkout" (never "included": Shopify adds tax at checkout for US orders and collects duties/import taxes at checkout for international ones via Managed Markets).
 7. While you're in product-description.tsx, delete the stray `console.log('Product data', ...)` debug block at the top.
 
 Keep formatting consistent with the existing Intl currency formatting.

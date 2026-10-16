@@ -414,7 +414,9 @@ export function ProductPanel({ product }: { product: Product }) {
         </div>
 
         <div className="assist">
-          <span>30-day returns</span>
+          <span>14-day returns</span>
+          <span>Free US shipping over $250</span>
+          <span>Taxes &amp; duties paid by buyer at checkout</span>
         </div>
 
         {/* Accordions */}

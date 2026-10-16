@@ -1,7 +1,9 @@
 import { getEditorials } from "lib/shopify";
 import Image from "next/image";
 import Link from "next/link";
-import { RadioPlayer } from "./radio-player";
+// AGMNT Radio is hidden from the home page for now. Re-enable by
+// uncommenting this import and the <RadioPlayer /> block below.
+// import { RadioPlayer } from "./radio-player";
 import { SectionHead } from "./section-head";
 
 const fmtDate = (s: string): string => {
@@ -71,9 +73,11 @@ export async function Dispatch() {
           ))
         )}
 
+        {/* AGMNT Radio — hidden from the home page for now (component kept).
         <div id="radio" className="ec-radio">
           <RadioPlayer />
         </div>
+        */}
       </section>
     </div>
   );

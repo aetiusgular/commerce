@@ -51,7 +51,7 @@ export function ProductDescription({ product }: { product: Product }) {
             </span>
           )}
           <span className="font-vremena text-xs opacity-40">
-            Taxes and duties included
+            Taxes and duties paid by buyer at checkout
           </span>
         </div>
 

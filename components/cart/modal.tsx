@@ -271,6 +271,10 @@ function CartModalContent({
                       Calculated at checkout
                     </p>
                   </div>
+                  <p className="mb-3 text-[10px] text-black/40 normal-case">
+                    Free US shipping over $250 · Taxes &amp; duties paid by
+                    buyer at checkout
+                  </p>
                   <div className="flex items-center justify-between border-t border-black/10 pt-3 text-black">
                     <p>Total</p>
                     <Price

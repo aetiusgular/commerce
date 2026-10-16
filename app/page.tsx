@@ -1,9 +1,11 @@
-import { Dispatch } from "components/home/dispatch";
+// Section 03 (Editorial + AGMNT Radio) is hidden from the home page for now.
+// Re-enable by uncommenting this import, the <Script> tag and the section below.
+// import { Dispatch } from "components/home/dispatch";
 import { Preloader } from "components/home/preloader";
 import { ShopSection } from "components/home/shop-section";
 import { ThisWeek } from "components/home/this-week";
 import Footer from "components/layout/footer";
-import Script from "next/script";
+// import Script from "next/script";
 import { Suspense } from "react";
 
 export const revalidate = 3600;
@@ -15,11 +17,13 @@ export default async function Page() {
       <Preloader />
 
       {/* Pull the SoundCloud Widget API in parallel with hydration so the
-          radio component finds it already loaded when its useEffect runs. */}
+          radio component finds it already loaded when its useEffect runs.
+          Hidden with the radio for now.
       <Script
         src="https://w.soundcloud.com/player/api.js"
         strategy="afterInteractive"
       />
+      */}
 
       {/* 01 — This week (Installations) */}
       <Suspense fallback={null}>
@@ -31,10 +35,11 @@ export default async function Page() {
         <ShopSection />
       </Suspense>
 
-      {/* 03 — Editorial (campaigns) + Radio */}
+      {/* 03 — Editorial (campaigns) + Radio — hidden from the home page for now.
       <Suspense fallback={null}>
         <Dispatch />
       </Suspense>
+      */}
 
       <Footer />
     </>

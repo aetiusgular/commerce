@@ -182,7 +182,11 @@ function Summary({ cart }: { cart: Cart }) {
         </div>
 
         <div className="assure">
-          <span>30-day returns on unworn pieces</span>
+          <span>14-day returns on unworn pieces</span>
+          <span>
+            Free US shipping over $250 · International at carrier rate
+          </span>
+          <span>Taxes &amp; duties paid by buyer at checkout</span>
         </div>
       </div>
     </div>

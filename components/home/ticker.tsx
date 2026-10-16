@@ -2,8 +2,9 @@ type TickerItem = { text: string; live?: boolean };
 
 const ITEMS: TickerItem[] = [
   { text: "Issue 14 — Spring / Summer 2026" },
-  { text: "Free shipping over $300" },
-  { text: "AGMNT Radio — Live now", live: true },
+  { text: "Free US shipping over $250" },
+  // Radio hidden from the home page for now — restore with the player.
+  // { text: "AGMNT Radio — Live now", live: true },
   { text: "New arrivals — Auralee, Lemaire, Our Legacy" },
   { text: "Editorial — The Quiet Uniform" },
   { text: "Studio hours 10:00 — 19:00 PST" },
