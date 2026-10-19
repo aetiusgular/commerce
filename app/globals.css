@@ -3960,10 +3960,10 @@ video::-webkit-media-controls-play-button {
   font-weight: 500;
 }
 
-/* Tablet (641-900px): keep the desktop split layout (Shop and Installations
+/* Tablet and large phones (481-900px): keep the desktop split layout (Shop and Installations
    by the logo, Search and Cart right). Row matches the 52px mobile bar so the
    shop filter bar still docks flush, and every link gets a 44px target. */
-@media (min-width: 641px) and (max-width: 900px) {
+@media (min-width: 481px) and (max-width: 900px) {
   .nv--v2 .nv-row {
     height: 52px;
     gap: 18px;
@@ -3993,7 +3993,7 @@ video::-webkit-media-controls-play-button {
     margin-right: -8px;
   }
 }
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .nv .nv-desk {
     display: none !important;
   }
@@ -4034,7 +4034,7 @@ video::-webkit-media-controls-play-button {
     padding: 0 6px;
     flex-shrink: 0;
     white-space: nowrap;
-    font-size: 9px;
+    font-size: 11px;
     line-height: 12px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -4056,6 +4056,17 @@ video::-webkit-media-controls-play-button {
   .nv-mlogo:focus-visible {
     outline: 2px solid #0a0a0a;
     outline-offset: -2px;
+  }
+}
+/* Step the type down only as far as each width needs to fit one row. */
+@media (max-width: 389px) {
+  .nv-mbtn {
+    font-size: 10px;
+  }
+}
+@media (max-width: 359px) {
+  .nv-mbtn {
+    font-size: 9px;
   }
 }
 /* Very narrow phones (320px): drop the divider so it never touches SHOP. */
