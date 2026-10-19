@@ -42,6 +42,26 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
   const [error, setError] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
+  // cmdk keeps the last item selected after the pointer leaves it. Only show
+  // that selection while the user is navigating with the arrow keys; with a
+  // mouse, rows underline on hover alone.
+  const [keyboardNav, setKeyboardNav] = useState(false);
+  // The filter remount replaces the rail buttons; put focus back on the one
+  // that was pressed so keyboard users keep their place.
+  const refocusRail = useRef<string | null>(null);
+  useEffect(() => {
+    const label = refocusRail.current;
+    if (!label) return;
+    refocusRail.current = null;
+    dialogRef.current
+      ?.querySelector<HTMLElement>(`[data-rail="${CSS.escape(label)}"]`)
+      ?.focus();
+  }, [filter]);
+  // True only for the first render after opening; filter remounts skip it.
+  const focusInputOnMount = useRef(true);
+  useEffect(() => {
+    focusInputOnMount.current = !isOpen;
+  }, [isOpen]);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -129,8 +149,12 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
     <button
       key={label}
       type="button"
+      data-rail={label}
       aria-pressed={active}
-      onClick={onClick}
+      onClick={() => {
+        refocusRail.current = label;
+        onClick();
+      }}
       className={`search-rail-item ${active ? "is-active" : ""}`}
     >
       {label}
@@ -147,8 +171,15 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
         className="search-overlay fixed inset-0 z-50 flex flex-col bg-white text-black font-vremena"
       >
         <Command
+          // Remount on filter change: cmdk otherwise keeps
+          // aria-activedescendant pointing at a row that was removed.
+          key={filter.kind === "all" ? "all" : `${filter.kind}:${filter.value}`}
           shouldFilter={false}
           loop
+          onKeyDown={(e) => {
+            if (["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key))
+              setKeyboardNav(true);
+          }}
           label="Search products"
           className="flex min-h-0 flex-1 flex-col"
         >
@@ -156,7 +187,9 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
             <Command.Input
               placeholder="Search products or brands"
               className="search-input"
-              autoFocus
+              // Focus the field when search opens, not after a filter
+              // remount, so tapping a brand never pops the phone keyboard.
+              autoFocus={focusInputOnMount.current}
               value={query}
               onValueChange={setQuery}
             />
@@ -236,7 +269,10 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
                     ? "Search is unavailable right now. Please refresh and try again."
                     : "Loading…"}
               </p>
-              <Command.List className="search-list">
+              <Command.List
+                className={`search-list ${keyboardNav ? "is-keyboard" : ""}`}
+                onMouseMove={() => keyboardNav && setKeyboardNav(false)}
+              >
                 {products && (
                   <Command.Empty className="search-empty">
                     No pieces match. Try a brand name or a garment type.

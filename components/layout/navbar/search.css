@@ -153,7 +153,7 @@
   white-space: nowrap;
   overflow-wrap: anywhere;
   text-underline-offset: 4px;
-  transition-property: opacity;
+  transition-property: background-color, color;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
@@ -162,12 +162,22 @@
     white-space: normal;
   }
 }
+/* Selected filter: solid ink block, readable at a glance (21:1). The
+   negative inline margin keeps the label text on the rail's left edge. */
 .search-rail-item.is-active {
-  text-decoration: underline;
+  background: #000;
+  color: #fff;
+  padding-inline: 6px;
+  margin-inline: -6px;
+}
+@media (min-width: 768px) {
+  .search-rail-item {
+    width: fit-content;
+  }
 }
 @media (hover: hover) {
-  .search-rail-item:hover {
-    opacity: 0.6;
+  .search-rail-item:not(.is-active):hover {
+    text-decoration: underline;
   }
 }
 .search-rail-item:focus-visible,
@@ -240,10 +250,20 @@
   font-variant-numeric: tabular-nums;
 }
 /* Keyboard highlight from cmdk, plus pointer hover. */
-.search-row[data-selected="true"] .search-row-name {
+/* Pointer: underline only while hovering. Keyboard: follow cmdk's selection. */
+@media (hover: hover) {
+  .search-row:hover .search-row-name {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .search-row:hover .search-row-leader {
+    border-bottom-color: #000;
+  }
+}
+.search-list.is-keyboard .search-row[data-selected="true"] .search-row-name {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.search-row[data-selected="true"] .search-row-leader {
+.search-list.is-keyboard .search-row[data-selected="true"] .search-row-leader {
   border-bottom-color: #000;
 }
