@@ -4034,7 +4034,7 @@ video::-webkit-media-controls-play-button {
     padding: 0 6px;
     flex-shrink: 0;
     white-space: nowrap;
-    font-size: 11px;
+    font-size: 9px;
     line-height: 12px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -4056,17 +4056,6 @@ video::-webkit-media-controls-play-button {
   .nv-mlogo:focus-visible {
     outline: 2px solid #0a0a0a;
     outline-offset: -2px;
-  }
-}
-/* Step the type down only as far as each width needs to fit one row. */
-@media (max-width: 389px) {
-  .nv-mbtn {
-    font-size: 10px;
-  }
-}
-@media (max-width: 359px) {
-  .nv-mbtn {
-    font-size: 9px;
   }
 }
 /* Very narrow phones (320px): drop the divider so it never touches SHOP. */
