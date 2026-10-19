@@ -3919,16 +3919,13 @@ video::-webkit-media-controls-play-button {
   opacity: 0.6;
 }
 .nv .ct {
-  color: #8a8a85;
+  /* 5.7:1 on white (WCAG AA); the old #8a8a85 was 3.4:1. */
+  color: rgba(10, 10, 10, 0.6);
   margin-left: 3px;
   font-variant-numeric: tabular-nums;
 }
 .nv-mob {
   display: none;
-}
-.nv-drawer {
-  display: none;
-  position: fixed;
 }
 
 .nv--v2 .nv-row {
@@ -3967,201 +3964,71 @@ video::-webkit-media-controls-play-button {
   .nv .nv-desk {
     display: none !important;
   }
+  /* One-row mobile bar. Edge padding is as tight as the screen allows and
+     grows to clear the notch; every button keeps a 44x44 target (AAA). */
   .nv-mob {
-    display: grid;
-    grid-template-columns: 44px 1fr auto;
+    display: flex;
     align-items: center;
     height: 52px;
-    padding: 0 max(12px, env(safe-area-inset-right)) 0
-      max(6px, env(safe-area-inset-left));
+    padding: 0 max(4px, env(safe-area-inset-right)) 0
+      max(12px, env(safe-area-inset-left));
   }
-  .nv-mob .nv-logo {
-    justify-content: flex-start;
+  .nv-mlogo {
+    min-height: 44px;
+    flex-shrink: 0;
   }
-  .nv-tap {
+  .nv-mdiv {
+    width: 1px;
+    height: 22px;
+    margin-left: 10px;
+    background: rgba(10, 10, 10, 0.16);
+    flex: none;
+  }
+  .nv-mbtns {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+    min-width: 0;
+  }
+  .nv-mbtn {
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    position: relative;
-    z-index: 70;
-  }
-  .nv-burger {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-  .nv-burger span {
-    display: block;
-    width: 19px;
-    height: 1.5px;
-    background: #0a0a0a;
-    transition:
-      transform 0.34s cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 0.18s ease;
-  }
-  .nv-burger.x span:nth-child(1) {
-    transform: translateY(6.5px) rotate(45deg);
-  }
-  .nv-burger.x span:nth-child(2) {
-    opacity: 0;
-  }
-  .nv-burger.x span:nth-child(3) {
-    transform: translateY(-6.5px) rotate(-45deg);
-  }
-  .nv-mcart {
-    justify-self: end;
-    font-size: 10px;
+    gap: 3px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 9px;
+    line-height: 12px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
     color: #0a0a0a;
+    text-underline-offset: 4px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .nv-mcart i {
+  .nv-mbtn i {
     font-style: normal;
-    color: #8a8a85;
-  }
-  .nv-mcart.has i {
-    color: #0a0a0a;
-  }
-
-  .nv-drawer {
-    display: block;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: var(--nv-top, 52px);
-    background: #fff;
-    z-index: 64;
-    visibility: hidden;
-    opacity: 0;
-    transition:
-      opacity 0.26s ease,
-      visibility 0s linear 0.26s;
-  }
-  .nv-drawer.open {
-    visibility: visible;
-    opacity: 1;
-    transition: opacity 0.26s ease;
-  }
-  .nv-drawer a {
-    color: #0a0a0a;
-    text-decoration: none;
-  }
-  .nv-drawer-in {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-direction: column;
-    padding: 0 0 max(22px, env(safe-area-inset-bottom));
-  }
-  .nv-search {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(10, 10, 10, 0.16);
-  }
-  .nv-search svg {
-    flex: none;
-    opacity: 0.5;
-  }
-  .nv-search input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: none;
-    font-family: inherit;
-    font-size: 15px;
-    color: #0a0a0a;
-    padding: 6px 0;
-  }
-  .nv-search input::placeholder {
-    color: #b4b2ac;
-  }
-  .nv-mlinks {
-    display: flex;
-    flex-direction: column;
-    padding: 0 18px;
-  }
-  .nv-mlinks a {
-    display: grid;
-    grid-template-columns: 26px 1fr auto;
-    align-items: baseline;
-    gap: 12px;
-    min-height: 56px;
-    padding: 15px 0;
-    border-bottom: 1px solid rgba(10, 10, 10, 0.09);
-    font-size: 26px;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    opacity: 0;
-    transform: translateY(7px);
-    transition:
-      opacity 0.3s ease,
-      transform 0.3s ease;
-  }
-  .nv-drawer.open .nv-mlinks a {
-    opacity: 1;
-    transform: none;
-  }
-  .nv-mlinks a i {
-    font-style: normal;
-    font-size: 9.5px;
-    letter-spacing: 0.14em;
-    color: #b4b2ac;
-    font-weight: 500;
+    color: rgba(10, 10, 10, 0.6);
     font-variant-numeric: tabular-nums;
   }
-  .nv-mlinks a em {
-    font-style: normal;
-    font-size: 9.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #8a8a85;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
+  .nv-mbtn[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
   }
-  .nv-mfoot {
-    margin-top: auto;
-    padding: 28px 18px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .nv-mfoot .wk {
-    font-size: 9.5px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #8a8a85;
-    font-weight: 500;
-  }
-  .nv-msocial {
-    display: flex;
-    gap: 22px;
-    font-size: 10.5px;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    font-weight: 500;
+  .nv-mbtn:focus-visible,
+  .nv-mlogo:focus-visible {
+    outline: 2px solid #0a0a0a;
+    outline-offset: -2px;
   }
 }
-@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
-  .nv-mlinks a,
-  .nv-burger span,
-  .nv-drawer {
-    transition-duration: 0.01ms !important;
-  }
-}
-@media (max-width: 380px) {
-  .nv-mlinks a {
-    font-size: 22px;
-    min-height: 52px;
+/* Very narrow phones (320px): drop the divider so it never touches SHOP. */
+@media (max-width: 340px) {
+  .nv-mdiv {
+    display: none;
   }
 }
 
@@ -4867,7 +4734,7 @@ video::-webkit-media-controls-play-button {
   display: block;
 }
 .nv-mob .nv-logo img {
-  height: 22px;
+  height: 26px;
 }
 
 /* ============================================================

@@ -36,7 +36,14 @@ const matches = (p: Product, q: string) => {
     .every((w) => hay.includes(w));
 };
 
-export default function Search({ isMobile = false }: { isMobile?: boolean }) {
+export default function Search({
+  isMobile = false,
+  triggerClassName,
+}: {
+  isMobile?: boolean;
+  /** Overrides the trigger's classes (the mobile bar uses its own button style). */
+  triggerClassName?: string;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState(false);
@@ -328,17 +335,24 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
       type="button"
       onClick={() => setIsOpen(true)}
       aria-haspopup="dialog"
-      className="transition-opacity hover:opacity-60"
+      className={triggerClassName ?? "transition-opacity hover:opacity-60"}
     >
-      SEARCH
+      {triggerClassName ? "Search" : "SEARCH"}
     </button>
   );
 }
 
-export function SearchSkeleton() {
+export function SearchSkeleton({
+  triggerClassName,
+}: {
+  triggerClassName?: string;
+}) {
   return (
-    <button type="button" className="transition-opacity hover:opacity-60">
-      SEARCH
+    <button
+      type="button"
+      className={triggerClassName ?? "transition-opacity hover:opacity-60"}
+    >
+      {triggerClassName ? "Search" : "SEARCH"}
     </button>
   );
 }
