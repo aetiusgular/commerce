@@ -70,7 +70,7 @@ export function ShopBrowser({
 }: {
   products: Product[];
   /** Set on /shop?q=: the header shows the query instead of a brand note. */
-  search?: { q: string; correctedTo: string | null };
+  search?: { q: string };
   initial?: InitialShopFilters;
   brandHrefs?: Record<string, string>;
   /** House descriptions sourced from Shopify collection descriptions, keyed by
@@ -523,7 +523,7 @@ export function ShopBrowser({
             <section className="snote" aria-live="polite">
               <h1 className="snote-t">
                 <span className="snote-l">
-                  Showing results for <b>“{search.correctedTo ?? search.q}”</b>
+                  Showing results for <b>“{search.q}”</b>
                   <span className="snote-n agmnt-tnum">
                     <span className="snote-d"> – </span>
                     {list.length} {list.length === 1 ? "piece" : "pieces"}
@@ -538,9 +538,6 @@ export function ShopBrowser({
                   <span aria-hidden="true">✕</span>
                 </Link>
               </h1>
-              {search.correctedTo && (
-                <p className="snote-c">No exact match for “{search.q}”</p>
-              )}
             </section>
           ) : brand && brandNote ? (
             <section className="bnote">

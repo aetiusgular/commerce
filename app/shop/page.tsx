@@ -62,7 +62,7 @@ export default async function ShopPage(props: {
       // A new search starts from a clean rail.
       key={q ?? ""}
       products={products}
-      search={q ? { q, correctedTo: found?.correctedTo ?? null } : undefined}
+      search={q ? { q } : undefined}
       initial={initialFromParams(sp)}
       brandHrefs={brandHrefs}
       brandNotes={brandNotes}

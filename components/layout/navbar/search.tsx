@@ -129,7 +129,7 @@ export default function Search({
   // Brand, title, type, category, colour, options, tags and description.
   const index = useMemo(() => indexProducts(products ?? []), [products]);
 
-  const { results, correctedTo, widened } = useMemo(() => {
+  const { results, widened } = useMemo(() => {
     let list = index;
     if (filter.kind === "designer")
       list = list.filter((ip) => ip.product.vendor === filter.value);
@@ -145,22 +145,18 @@ export default function Search({
       if (all.products.length)
         return {
           results: all.products,
-          correctedTo: all.correctedTo,
           widened: true,
         };
     }
-    return { results: r.products, correctedTo: r.correctedTo, widened: false };
+    return { results: r.products, widened: false };
   }, [index, filter, query]);
 
   const scope =
     filter.kind === "all" || widened ? "All products" : filter.value;
   const q = query.trim();
-  const heading = !q
-    ? scope
-    : (widened && filter.kind !== "all" ? `Nothing in ${filter.value}. ` : "") +
-      (correctedTo
-        ? `No exact match for “${q}”. Closest: “${correctedTo}” in ${scope}`
-        : `“${q}” in ${scope}`);
+  // Always echo exactly what was typed; misspellings still return the
+  // closest pieces underneath.
+  const heading = q ? `“${q}” in ${scope}` : scope;
 
   const railItem = (label: string, active: boolean, onClick: () => void) => (
     <button
