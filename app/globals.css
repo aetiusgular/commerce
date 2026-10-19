@@ -3919,8 +3919,8 @@ video::-webkit-media-controls-play-button {
   opacity: 0.6;
 }
 .nv .ct {
-  /* 5.7:1 on white (WCAG AA); the old #8a8a85 was 3.4:1. */
-  color: rgba(10, 10, 10, 0.6);
+  /* 7.6:1 on white (WCAG AAA 1.4.6). */
+  color: rgba(10, 10, 10, 0.7);
   margin-left: 3px;
   font-variant-numeric: tabular-nums;
 }
@@ -4045,7 +4045,7 @@ video::-webkit-media-controls-play-button {
   }
   .nv-mbtn i {
     font-style: normal;
-    color: rgba(10, 10, 10, 0.6);
+    color: rgba(10, 10, 10, 0.7);
     font-variant-numeric: tabular-nums;
   }
   .nv-mbtn[aria-current="page"] {
