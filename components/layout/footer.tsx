@@ -1,9 +1,12 @@
+import { CountrySelect } from "components/localization/country-select";
+import { getCountry } from "lib/localization";
 import { getMenu } from "lib/shopify";
 import Image from "next/image";
 import Link from "next/link";
 import { LiveClock } from "../common/clock";
 import FooterMenu from "./footer-menu";
 import { Registration } from "./newsletter";
+import { Suspense } from "react";
 
 const { SITE_NAME } = process.env;
 
@@ -36,7 +39,9 @@ export default async function Footer() {
                     <LiveClock locale="America/Los_Angeles" />
                   </div>
                   <div className="flex flex-row justify-between">
-                    <div />
+                    <Suspense fallback={<div />}>
+                      <FooterCountry />
+                    </Suspense>
                     <Link
                       href="mailto:info@agmnt.space"
                       className="hover:underline"
@@ -104,4 +109,8 @@ export default async function Footer() {
       </div>
     </footer>
   );
+}
+
+async function FooterCountry() {
+  return <CountrySelect current={await getCountry()} />;
 }

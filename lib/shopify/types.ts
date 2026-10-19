@@ -176,12 +176,19 @@ export type ShopifyCartOperation = {
     cart: ShopifyCart;
   };
   variables: {
+    country?: string;
     cartId: string;
   };
 };
 
 export type ShopifyCreateCartOperation = {
   data: { cartCreate: { cart: ShopifyCart } };
+  variables: { country?: string };
+};
+
+export type ShopifyUpdateCartBuyerIdentityOperation = {
+  data: { cartBuyerIdentityUpdate: { cart: ShopifyCart } };
+  variables: { cartId: string; country: string };
 };
 
 export type ShopifyAddToCartOperation = {
@@ -191,6 +198,7 @@ export type ShopifyAddToCartOperation = {
     };
   };
   variables: {
+    country?: string;
     cartId: string;
     lines: {
       merchandiseId: string;
@@ -206,6 +214,7 @@ export type ShopifyRemoveFromCartOperation = {
     };
   };
   variables: {
+    country?: string;
     cartId: string;
     lineIds: string[];
   };
@@ -218,6 +227,7 @@ export type ShopifyUpdateCartOperation = {
     };
   };
   variables: {
+    country?: string;
     cartId: string;
     lines: {
       id: string;
@@ -243,6 +253,7 @@ export type ShopifyCollectionProductsOperation = {
     };
   };
   variables: {
+    country?: string;
     handle: string;
     reverse?: boolean;
     sortKey?: string;
@@ -283,6 +294,7 @@ export type ShopifyPagesOperation = {
 export type ShopifyProductOperation = {
   data: { product: ShopifyProduct };
   variables: {
+    country?: string;
     handle: string;
   };
 };
@@ -292,6 +304,7 @@ export type ShopifyProductRecommendationsOperation = {
     productRecommendations: ShopifyProduct[];
   };
   variables: {
+    country?: string;
     productId: string;
   };
 };
@@ -301,6 +314,7 @@ export type ShopifyProductsOperation = {
     products: Connection<ShopifyProduct>;
   };
   variables: {
+    country?: string;
     query?: string;
     reverse?: boolean;
     sortKey?: string;

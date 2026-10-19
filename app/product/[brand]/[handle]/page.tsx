@@ -1,3 +1,4 @@
+import { getCountry } from "lib/localization";
 import { ProductViewTracker } from "components/analytics/product-view-tracker";
 import Footer from "components/layout/footer";
 import { ProductGallery } from "components/product/product-gallery";
@@ -64,7 +65,7 @@ export default async function ProductPage(props: {
   params: Promise<{ brand: string; handle: string }>;
 }) {
   const params = await props.params;
-  const product = await getProduct(params.handle);
+  const product = await getProduct(params.handle, await getCountry());
 
   if (!product) return notFound();
 
@@ -80,9 +81,13 @@ export default async function ProductPage(props: {
   const availability = product.availableForSale
     ? "https://schema.org/InStock"
     : "https://schema.org/OutOfStock";
-  const currency = product.priceRange.minVariantPrice.currencyCode;
-  const low = product.priceRange.minVariantPrice.amount;
-  const high = product.priceRange.maxVariantPrice.amount;
+  // Structured data stays in the store's base USD price so Google Shopping and
+  // Merchant Center always see one consistent price, whatever country renders it.
+  const basePrice =
+    (await getProduct(params.handle))?.priceRange ?? product.priceRange;
+  const currency = basePrice.minVariantPrice.currencyCode;
+  const low = basePrice.minVariantPrice.amount;
+  const high = basePrice.maxVariantPrice.amount;
   // Price valid roughly a year out (Google recommends a priceValidUntil).
   const priceValidUntil = new Date(Date.now() + 365 * 864e5)
     .toISOString()
@@ -162,7 +167,7 @@ export default async function ProductPage(props: {
               (t) => t.toLowerCase() === "last pair",
             )}
           />
-          <ProductPanel product={product} />
+          <ProductPanel product={product} country={await getCountry()} />
         </div>
 
         <Suspense fallback={null}>
@@ -176,7 +181,7 @@ export default async function ProductPage(props: {
 }
 
 async function RelatedProducts({ id }: { id: string }) {
-  const related = await getProductRecommendations(id);
+  const related = await getProductRecommendations(id, await getCountry());
   if (!related.length) return null;
 
   return (

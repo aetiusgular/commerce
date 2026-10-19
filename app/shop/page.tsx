@@ -1,3 +1,4 @@
+import { getCountry } from "lib/localization";
 import { ShopBrowser } from "components/shop/shop-browser";
 import { getCollections, getProducts } from "lib/shopify";
 import {
@@ -28,7 +29,7 @@ export default async function ShopPage(props: {
   // (?q=) pre-narrows the set before the rail's faceting takes over, and the
   // remaining params seed the rail so a shared link restores its filters.
   const [all, collections] = await Promise.all([
-    getProducts({}),
+    getProducts({ country: await getCountry() }),
     getCollections(),
   ]);
   const products = q ? applyShopFilters(all, { q }) : all;

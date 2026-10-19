@@ -4,7 +4,13 @@ import { addItem } from "components/cart/actions";
 import { useCart } from "components/cart/cart-context";
 import { trackAddToCart } from "lib/analytics";
 import type { Product, ProductVariant } from "lib/shopify/types";
-import { colorHex, discountPercent, isOnSale, parseKeyValues } from "lib/utils";
+import {
+  colorHex,
+  discountPercent,
+  isOnSale,
+  marketNotes,
+  parseKeyValues,
+} from "lib/utils";
 import { useMemo, useState, useTransition } from "react";
 
 const lc = (s: string) => s.trim().toLowerCase();
@@ -189,7 +195,13 @@ function splitDetails(rows: { label: string; value: string }[] | null): {
   return { composition, info };
 }
 
-export function ProductPanel({ product }: { product: Product }) {
+export function ProductPanel({
+  product,
+  country,
+}: {
+  product: Product;
+  country: string;
+}) {
   const { addCartItem } = useCart();
   const [, startAdd] = useTransition();
 
@@ -415,8 +427,9 @@ export function ProductPanel({ product }: { product: Product }) {
 
         <div className="assist">
           <span>14-day returns</span>
-          <span>Free US shipping over $250</span>
-          <span>Taxes &amp; duties paid by buyer at checkout</span>
+          {marketNotes(country).map((note) => (
+            <span key={note}>{note}</span>
+          ))}
         </div>
 
         {/* Accordions */}

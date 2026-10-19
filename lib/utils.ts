@@ -189,3 +189,26 @@ export const validateEnvironmentVariables = () => {
     );
   }
 };
+
+/**
+ * Checkout note for the buyer's country. Keyed off country, not currency:
+ * Norway is priced in USD but is still an international order. International
+ * orders go through Shopify Managed Markets (Global-e), so duties and import
+ * taxes are prepaid. Canada uses tax-exclusive display: duties are included
+ * but GST/HST is added at checkout.
+ */
+export const marketNotes = (country: string): string[] => {
+  if (country === "US")
+    return ["Free US shipping over $250", "Sales tax calculated at checkout"];
+  const shipping = "Shipping calculated at checkout";
+  if (country === "CA")
+    return [shipping, "Duties included · GST/HST added at checkout"];
+  return [shipping, "Duties & taxes included · nothing due on delivery"];
+};
+
+/** Label for the cart summary row that is settled at checkout. */
+export const checkoutCostsLabel = (country: string): string => {
+  if (country === "US") return "Shipping & sales tax";
+  if (country === "CA") return "Shipping & GST/HST";
+  return "Shipping";
+};

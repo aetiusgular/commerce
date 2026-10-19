@@ -17,7 +17,14 @@ import {
   createCartMutation,
   editCartItemsMutation,
   removeFromCartMutation,
+  updateCartBuyerIdentityMutation,
 } from "./mutations/cart";
+import {
+  COUNTRY_COOKIE,
+  DEFAULT_COUNTRY,
+  getCountry,
+  normalizeCountry,
+} from "lib/localization";
 import { getCartQuery } from "./queries/cart";
 import {
   getCollectionProductsQuery,
@@ -66,6 +73,7 @@ import {
   ShopifyProductRecommendationsOperation,
   ShopifyProductsOperation,
   ShopifyRemoveFromCartOperation,
+  ShopifyUpdateCartBuyerIdentityOperation,
   ShopifyUpdateCartOperation,
   ShopMetafieldsOperation,
 } from "./types";
@@ -233,6 +241,7 @@ const reshapeProducts = (products: ShopifyProduct[]) => {
 export async function createCart(): Promise<Cart> {
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
+    variables: { country: await getCountry() },
   });
 
   return reshapeCart(res.body.data.cartCreate.cart);
@@ -245,6 +254,7 @@ export async function addToCart(
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
     variables: {
+      country: await getCountry(),
       cartId,
       lines,
     },
@@ -257,6 +267,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
   const res = await shopifyFetch<ShopifyRemoveFromCartOperation>({
     query: removeFromCartMutation,
     variables: {
+      country: await getCountry(),
       cartId,
       lineIds,
     },
@@ -272,6 +283,7 @@ export async function updateCart(
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
     query: editCartItemsMutation,
     variables: {
+      country: await getCountry(),
       cartId,
       lines,
     },
@@ -293,7 +305,12 @@ export async function getCart(): Promise<Cart | undefined> {
 
   const res = await shopifyFetch<ShopifyCartOperation>({
     query: getCartQuery,
-    variables: { cartId },
+    // Cookie only: the country cookie is pinned when the cart is created
+    // (see addItem), so this private cache never needs request headers.
+    variables: {
+      cartId,
+      country: normalizeCountry((await cookies()).get(COUNTRY_COOKIE)?.value),
+    },
   });
 
   // Old carts becomes `null` when you checkout.
@@ -302,6 +319,17 @@ export async function getCart(): Promise<Cart | undefined> {
   }
 
   return reshapeCart(res.body.data.cart);
+}
+
+// Re-prices an existing cart for a new country (used by the country picker),
+// so checkout opens in the right currency with the right duties and taxes.
+export async function updateCartCountry(country: string): Promise<void> {
+  const cartId = (await cookies()).get("cartId")?.value;
+  if (!cartId) return;
+  await shopifyFetch<ShopifyUpdateCartBuyerIdentityOperation>({
+    query: updateCartBuyerIdentityMutation,
+    variables: { cartId, country },
+  });
 }
 
 export async function getCollection(
@@ -325,10 +353,12 @@ export async function getCollectionProducts({
   collection,
   reverse,
   sortKey,
+  country = DEFAULT_COUNTRY,
 }: {
   collection: string;
   reverse?: boolean;
   sortKey?: string;
+  country?: string;
 }): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.collections, TAGS.products);
@@ -345,6 +375,7 @@ export async function getCollectionProducts({
     query: getCollectionProductsQuery,
     variables: {
       handle: collection,
+      country,
       reverse,
       sortKey: sortKey === "CREATED_AT" ? "CREATED" : sortKey,
     },
@@ -453,7 +484,10 @@ export async function getPages(): Promise<Page[]> {
   return removeEdgesAndNodes(res.body.data.pages);
 }
 
-export async function getProduct(handle: string): Promise<Product | undefined> {
+export async function getProduct(
+  handle: string,
+  country: string = DEFAULT_COUNTRY,
+): Promise<Product | undefined> {
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
@@ -467,6 +501,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
     query: getProductQuery,
     variables: {
       handle,
+      country,
     },
   });
 
@@ -475,6 +510,7 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
 
 export async function getProductRecommendations(
   productId: string,
+  country: string = DEFAULT_COUNTRY,
 ): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
@@ -484,6 +520,7 @@ export async function getProductRecommendations(
     query: getProductRecommendationsQuery,
     variables: {
       productId,
+      country,
     },
   });
 
@@ -494,10 +531,12 @@ export async function getProducts({
   query,
   reverse,
   sortKey,
+  country = DEFAULT_COUNTRY,
 }: {
   query?: string;
   reverse?: boolean;
   sortKey?: string;
+  country?: string;
 }): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);
@@ -507,6 +546,7 @@ export async function getProducts({
     query: getProductsQuery,
     variables: {
       query,
+      country,
       reverse,
       sortKey,
     },

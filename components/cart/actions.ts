@@ -1,12 +1,14 @@
 "use server";
 
 import { TAGS } from "lib/constants";
+import { COUNTRY_COOKIE, getCountry } from "lib/localization";
 import {
   addToCart,
   createCart,
   getCart,
   removeFromCart,
   updateCart,
+  updateCartCountry,
 } from "lib/shopify";
 import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
@@ -27,7 +29,17 @@ export async function addItem(
     // add-to-cart works on any device, not just ones with a pre-existing cart.
     if (!(await cookies()).get("cartId")?.value) {
       const cart = await createCart();
-      (await cookies()).set("cartId", cart.id!);
+      const jar = await cookies();
+      jar.set("cartId", cart.id!);
+      // Pin the pricing country to the cart so cart, checkout and product
+      // pages all agree even if the geo-IP lookup changes mid-session.
+      if (!jar.get(COUNTRY_COOKIE)?.value) {
+        jar.set(COUNTRY_COOKIE, await getCountry(), {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: "lax",
+        });
+      }
     }
     await addToCart([{ merchandiseId: selectedVariantId, quantity: 1 }]);
     updateTag(TAGS.cart);
@@ -104,6 +116,11 @@ export async function updateItemQuantity(
 }
 
 export async function redirectToCheckout() {
+  // Carts made before localized pricing shipped have no buyer country. Set it
+  // so checkout opens in the same currency the site showed.
+  try {
+    await updateCartCountry(await getCountry());
+  } catch {}
   let cart = await getCart();
 
   if (!cart?.checkoutUrl) return;

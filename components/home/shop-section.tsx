@@ -1,3 +1,4 @@
+import { getCountry } from "lib/localization";
 import { getCollections, getProducts } from "lib/shopify";
 import { SectionHead } from "./section-head";
 import { SelectionGrid } from "./selection-grid";
@@ -25,7 +26,11 @@ function weeklyShuffle<T>(items: T[]): T[] {
 
 export async function ShopSection() {
   const [products, collections] = await Promise.all([
-    getProducts({ sortKey: "CREATED_AT", reverse: true }),
+    getProducts({
+      sortKey: "CREATED_AT",
+      reverse: true,
+      country: await getCountry(),
+    }),
     getCollections(),
   ]);
 

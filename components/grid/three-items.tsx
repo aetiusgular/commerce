@@ -1,3 +1,4 @@
+import { getCountry } from "lib/localization";
 import { GridTileImage } from "components/grid/tile";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
@@ -52,6 +53,7 @@ export async function ThreeItemGrid() {
   // Collections that start with `hidden-*` are hidden from the search page.
   const homepageItems = await getCollectionProducts({
     collection: "hidden-homepage-featured-items",
+    country: await getCountry(),
   });
 
   if (!homepageItems[0] || !homepageItems[1] || !homepageItems[2]) return null;

@@ -1,3 +1,4 @@
+import { getCountry } from "lib/localization";
 import { ShopBrowser } from "components/shop/shop-browser";
 import { getCollection, getCollectionProducts } from "lib/shopify";
 import { computeFacets, initialFromParams } from "lib/shop-facets";
@@ -35,7 +36,10 @@ export default async function CategoryPage(props: {
 
   const [collection, products] = await Promise.all([
     getCollection(params.collection),
-    getCollectionProducts({ collection: params.collection }),
+    getCollectionProducts({
+      collection: params.collection,
+      country: await getCountry(),
+    }),
   ]);
 
   // Brand landing page = every product shares the collection's own vendor.
