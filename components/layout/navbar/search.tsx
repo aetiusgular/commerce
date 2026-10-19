@@ -4,6 +4,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Cross1Icon } from "@radix-ui/react-icons";
 import { Command } from "cmdk";
 import { categoriesOf, computeFacets } from "lib/shop-facets";
+import { indexProducts, searchProducts } from "lib/search";
 import type { Product } from "lib/shopify/types";
 import { productPath } from "lib/utils";
 import { useRouter } from "next/navigation";
@@ -22,19 +23,6 @@ const formatPrice = (amount: string, currency: string) =>
     currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 0,
   }).format(parseFloat(amount));
-
-/** Every word in the query must appear in the title, brand, type or a category. */
-const matches = (p: Product, q: string) => {
-  const hay = [p.title, p.vendor, p.productType, ...categoriesOf(p)]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  return q
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((w) => hay.includes(w));
-};
 
 export default function Search({
   isMobile = false,
@@ -138,19 +126,41 @@ export default function Search({
     };
   }, [products]);
 
-  const results = useMemo(() => {
-    let list = products ?? [];
-    if (filter.kind === "designer")
-      list = list.filter((p) => p.vendor === filter.value);
-    if (filter.kind === "category")
-      list = list.filter((p) => categoriesOf(p).includes(filter.value));
-    if (query.trim()) list = list.filter((p) => matches(p, query.trim()));
-    return list;
-  }, [products, filter, query]);
+  // Brand, title, type, category, colour, options, tags and description.
+  const index = useMemo(() => indexProducts(products ?? []), [products]);
 
-  const heading =
-    (query.trim() ? `“${query.trim()}” in ` : "") +
-    (filter.kind === "all" ? "All products" : filter.value);
+  const { results, correctedTo, widened } = useMemo(() => {
+    let list = index;
+    if (filter.kind === "designer")
+      list = list.filter((ip) => ip.product.vendor === filter.value);
+    if (filter.kind === "category")
+      list = list.filter((ip) =>
+        categoriesOf(ip.product).includes(filter.value),
+      );
+    const r = searchProducts(list, query);
+    // Nothing inside the selected brand or category: search everything
+    // rather than show an empty page ("veerkracht" while on Xlim).
+    if (!r.products.length && query.trim() && filter.kind !== "all") {
+      const all = searchProducts(index, query);
+      if (all.products.length)
+        return {
+          results: all.products,
+          correctedTo: all.correctedTo,
+          widened: true,
+        };
+    }
+    return { results: r.products, correctedTo: r.correctedTo, widened: false };
+  }, [index, filter, query]);
+
+  const scope =
+    filter.kind === "all" || widened ? "All products" : filter.value;
+  const q = query.trim();
+  const heading = !q
+    ? scope
+    : (widened && filter.kind !== "all" ? `Nothing in ${filter.value}. ` : "") +
+      (correctedTo
+        ? `No exact match for “${q}”. Closest: “${correctedTo}” in ${scope}`
+        : `“${q}” in ${scope}`);
 
   const railItem = (label: string, active: boolean, onClick: () => void) => (
     <button
@@ -186,13 +196,25 @@ export default function Search({
           onKeyDown={(e) => {
             if (["ArrowUp", "ArrowDown", "Home", "End"].includes(e.key))
               setKeyboardNav(true);
+            // Enter without arrowing to a row opens the full results page,
+            // the same matching (typos included) with filters and the grid.
+            if (e.key === "Enter" && !keyboardNav && query.trim()) {
+              e.preventDefault();
+              const params = new URLSearchParams({ q: query.trim() });
+              if (filter.kind === "designer")
+                params.set("designer", filter.value);
+              if (filter.kind === "category")
+                params.set("category", filter.value);
+              setIsOpen(false);
+              router.push(`/shop?${params}`);
+            }
           }}
           label="Search products"
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="search-head">
             <Command.Input
-              placeholder="Search products or brands"
+              placeholder="Search brands, pieces, colours"
               className="search-input"
               // Focus the field when search opens, not after a filter
               // remount, so tapping a brand never pops the phone keyboard.
@@ -276,20 +298,21 @@ export default function Search({
                     ? "Search is unavailable right now. Please refresh and try again."
                     : "Loading…"}
               </p>
+              {products && !results.length && (
+                <p className="search-empty">
+                  No pieces match. Try a brand, colour or garment type.
+                </p>
+              )}
               <Command.List
                 className={`search-list ${keyboardNav ? "is-keyboard" : ""}`}
                 onMouseMove={() => keyboardNav && setKeyboardNav(false)}
+                // An empty listbox fails ARIA's required-children rule.
+                hidden={!results.length}
               >
-                {products && (
-                  <Command.Empty className="search-empty">
-                    No pieces match. Try a brand name or a garment type.
-                  </Command.Empty>
-                )}
                 {results.map((p) => (
                   <Command.Item
                     key={p.id}
                     value={p.id}
-                    keywords={[p.vendor, p.productType].filter(Boolean)}
                     onSelect={() => {
                       setIsOpen(false);
                       router.push(productPath(p));

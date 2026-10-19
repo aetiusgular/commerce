@@ -632,6 +632,86 @@ video::-webkit-media-controls-play-button {
   }
 }
 
+/* ---- search results header (/shop?q=), takes the brand-note slot ---- */
+.agmnt-shop .snote {
+  padding: 22px 26px 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+.agmnt-shop .snote-t {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: clamp(17px, 1.5vw, 21px);
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+.agmnt-shop .snote-l {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.agmnt-shop .snote-t b {
+  font-weight: 700;
+}
+.agmnt-shop .snote-n {
+  color: rgba(10, 10, 10, 0.6);
+}
+.agmnt-shop .snote .snote-x {
+  flex-shrink: 0;
+  color: var(--ink);
+  letter-spacing: 0.14em;
+}
+.agmnt-shop .snote-c {
+  margin-top: 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(10, 10, 10, 0.6);
+}
+@media (max-width: 820px) {
+  .agmnt-shop .snote {
+    padding: 18px 18px 16px;
+  }
+}
+/* The sticky filter bar already says "Sorted by relevance" below 900px. */
+@media (max-width: 900px) {
+  .agmnt-shop .ghead.is-search {
+    display: none;
+  }
+}
+/* Phones: the count drops to its own small line instead of a dangling dash. */
+@media (max-width: 600px) {
+  .agmnt-shop .snote {
+    padding: 16px 14px 14px;
+  }
+  .agmnt-shop .snote-t {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .agmnt-shop .snote-n {
+    display: block;
+    margin-top: 6px;
+    font-size: 9.5px;
+    line-height: 1.4;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .agmnt-shop .snote-d {
+    display: none;
+  }
+  .agmnt-shop .snote-xw {
+    display: none;
+  }
+  .agmnt-shop .snote .snote-x {
+    min-width: 44px;
+    min-height: 44px;
+    margin: -12px -6px 0 0;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+}
+
 /* ---- shared atoms: link + button ---- */
 .agmnt-shop .lnk {
   font-size: 9.5px;

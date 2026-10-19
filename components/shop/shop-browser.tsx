@@ -66,8 +66,11 @@ export function ShopBrowser({
   initial,
   brandHrefs,
   brandNotes,
+  search,
 }: {
   products: Product[];
+  /** Set on /shop?q=: the header shows the query instead of a brand note. */
+  search?: { q: string; correctedTo: string | null };
   initial?: InitialShopFilters;
   brandHrefs?: Record<string, string>;
   /** House descriptions sourced from Shopify collection descriptions, keyed by
@@ -489,7 +492,11 @@ export function ShopBrowser({
         <button className="msbtn" onClick={() => setSheet(true)}>
           Filter &amp; sort{activeN > 0 && <i>{activeN}</i>}
         </button>
-        <span className="mono agmnt-tnum">{list.length} pieces</span>
+        <span className="mono agmnt-tnum">
+          {search && f.sort === SORTS[0]
+            ? "Sorted by relevance"
+            : `${list.length} pieces`}
+        </span>
       </div>
 
       <div className="lay-rail">
@@ -512,7 +519,30 @@ export function ShopBrowser({
         </aside>
 
         <div className="lay-main">
-          {brand && brandNote && (
+          {search ? (
+            <section className="snote" aria-live="polite">
+              <h1 className="snote-t">
+                <span className="snote-l">
+                  Showing results for <b>“{search.correctedTo ?? search.q}”</b>
+                  <span className="snote-n agmnt-tnum">
+                    <span className="snote-d"> – </span>
+                    {list.length} {list.length === 1 ? "piece" : "pieces"}
+                  </span>
+                </span>
+                <Link
+                  href="/shop"
+                  className="lnk snote-x"
+                  aria-label="Clear search"
+                >
+                  Clear<span className="snote-xw"> search</span>{" "}
+                  <span aria-hidden="true">✕</span>
+                </Link>
+              </h1>
+              {search.correctedTo && (
+                <p className="snote-c">No exact match for “{search.q}”</p>
+              )}
+            </section>
+          ) : brand && brandNote ? (
             <section className="bnote">
               <div className="bnote-t">
                 <h2>
@@ -525,11 +555,16 @@ export function ShopBrowser({
               </div>
               <p>{brandNote}</p>
             </section>
-          )}
-          <div className="ghead">
+          ) : null}
+          <div className={search ? "ghead is-search" : "ghead"}>
             <span className="agmnt-tnum">
-              {list.length} {list.length === 1 ? "piece" : "pieces"} shown
-              {f.sort !== SORTS[0] && ` · ${f.sort}`}
+              {search
+                ? f.sort === SORTS[0]
+                  ? "Sorted by relevance"
+                  : `Sorted by ${f.sort.toLowerCase()}`
+                : `${list.length} ${list.length === 1 ? "piece" : "pieces"} shown${
+                    f.sort !== SORTS[0] ? ` · ${f.sort}` : ""
+                  }`}
             </span>
           </div>
           {grid}
