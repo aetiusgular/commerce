@@ -5,6 +5,7 @@ import type { Cart, CartItem } from "lib/shopify/types";
 import {
   checkoutCostsLabel,
   colorHex,
+  isInternational,
   marketNotes,
   productPath,
 } from "lib/utils";
@@ -170,7 +171,9 @@ function Summary({ cart, country }: { cart: Cart; country: string }) {
         </div>
         <div className="srow">
           <span className="k">{checkoutCostsLabel(country)}</span>
-          <span className="v free">Calculated at checkout</span>
+          <span className="v free">
+            {isInternational(country) ? "Flat rate at checkout" : "Calculated at checkout"}
+          </span>
         </div>
 
         <div className="summary-rule strong" />
@@ -193,7 +196,9 @@ function Summary({ cart, country }: { cart: Cart; country: string }) {
         </div>
 
         <div className="assure">
-          <span>14-day returns on unworn pieces</span>
+          {!isInternational(country) && (
+            <span>14-day returns on unworn pieces</span>
+          )}
           {marketNotes(country).map((note) => (
             <span key={note}>{note}</span>
           ))}

@@ -9,7 +9,6 @@ import {
   discountPercent,
   formatAmount,
   isOnSale,
-  marketNotes,
   parseKeyValues,
 } from "lib/utils";
 import { useMemo, useState, useTransition } from "react";
@@ -426,13 +425,6 @@ export function ProductPanel({
                   ? "Add to cart"
                   : "Sold out"}
           </button>
-        </div>
-
-        <div className="assist">
-          <span>14-day returns</span>
-          {marketNotes(country).map((note) => (
-            <span key={note}>{note}</span>
-          ))}
         </div>
 
         {/* Accordions */}
