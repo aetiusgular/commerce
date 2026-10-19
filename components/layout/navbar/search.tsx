@@ -3,204 +3,296 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Cross1Icon } from "@radix-ui/react-icons";
 import { Command } from "cmdk";
+import { categoriesOf, computeFacets } from "lib/shop-facets";
+import type { Product } from "lib/shopify/types";
 import { productPath } from "lib/utils";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./search.css";
 
-interface Product {
-  id: string;
-  title: string;
-  handle: string;
-  vendor?: string;
-  priceRange: {
-    minVariantPrice: {
-      amount: string;
-    };
-  };
-}
+type Filter =
+  | { kind: "all" }
+  | { kind: "designer"; value: string }
+  | { kind: "category"; value: string };
 
-interface Collection {
-  id: string;
-  title: string;
-  handle: string;
-}
+const formatPrice = (amount: string, currency: string) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: 0,
+  }).format(parseFloat(amount));
+
+/** Every word in the query must appear in the title, brand, type or a category. */
+const matches = (p: Product, q: string) => {
+  const hay = [p.title, p.vendor, p.productType, ...categoriesOf(p)]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return q
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((w) => hay.includes(w));
+};
 
 export default function Search({ isMobile = false }: { isMobile?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [error, setError] = useState(false);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>({ kind: "all" });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
+  // The trigger unmounts while the overlay is open, so focus is restored
+  // after the next commit, once the button exists again.
+  const restoreFocus = useRef(false);
+  const close = useCallback(() => {
+    restoreFocus.current = true;
+    setIsOpen(false);
+  }, []);
   useEffect(() => {
-    if (isOpen) {
-      fetchProducts();
-      fetchCollections();
+    if (!isOpen && restoreFocus.current) {
+      restoreFocus.current = false;
+      triggerRef.current?.focus();
     }
   }, [isOpen]);
 
+  // Load once per open. The API prices products for the visitor's country.
   useEffect(() => {
-    if (searchQuery) {
-      const filtered = products.filter((product) =>
-        product.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    if (!isOpen || products) return;
+    fetch("/api/products")
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((d) => setProducts(d.products ?? []))
+      .catch(() => setError(true));
+  }, [isOpen, products]);
+
+  // Escape closes; lock page scroll while the overlay is up.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return close();
+      // Keep Tab inside the dialog (aria-modal does not trap focus itself).
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      const els = dialogRef.current.querySelectorAll<HTMLElement>(
+        'input, button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
       );
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts(products);
-    }
-  }, [searchQuery, products]);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch("/api/products");
-      const data = await response.json();
-      setProducts(data.products || []);
-      setFilteredProducts(data.products || []);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  };
-
-  const fetchCollections = async () => {
-    try {
-      const response = await fetch("/api/collections");
-      const data = await response.json();
-      // Filter out the "All" collection (handle === "")
-      const filteredCollections = (data.collections || []).filter(
-        (c: Collection) => c.handle !== "",
-      );
-      setCollections(filteredCollections);
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-    }
-  };
-
-  const handleCategoryClick = async (handle: string) => {
-    try {
-      // If handle is empty or "all", show all products
-      if (!handle || handle === "" || handle.toLowerCase() === "all") {
-        setFilteredProducts(products);
-        setSearchQuery("");
-        return;
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (!first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [isOpen, close]);
 
-      const response = await fetch(`/api/collections/${handle}`);
-      const data = await response.json();
+  // Only designers and categories that have live products. Archive brands
+  // whose products are unpublished never appear.
+  const facets = useMemo(() => {
+    const f = computeFacets(products ?? []);
+    const byName = (a: string, b: string) =>
+      a.localeCompare(b, "en", { sensitivity: "base" });
+    return {
+      designers: [...f.designers].sort(byName),
+      categories: [...f.categories].sort(byName),
+    };
+  }, [products]);
 
-      if (data.products && data.products.length > 0) {
-        setFilteredProducts(data.products);
-      } else {
-        // If no products found, show empty array
-        setFilteredProducts([]);
-      }
-    } catch (error) {
-      console.error("Error fetching collection products:", error);
-      setFilteredProducts([]);
-    }
-  };
+  const results = useMemo(() => {
+    let list = products ?? [];
+    if (filter.kind === "designer")
+      list = list.filter((p) => p.vendor === filter.value);
+    if (filter.kind === "category")
+      list = list.filter((p) => categoriesOf(p).includes(filter.value));
+    if (query.trim()) list = list.filter((p) => matches(p, query.trim()));
+    return list;
+  }, [products, filter, query]);
+
+  const heading =
+    (query.trim() ? `“${query.trim()}” in ` : "") +
+    (filter.kind === "all" ? "All products" : filter.value);
+
+  const railItem = (label: string, active: boolean, onClick: () => void) => (
+    <button
+      key={label}
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`search-rail-item ${active ? "is-active" : ""}`}
+    >
+      {label}
+    </button>
+  );
 
   if (isOpen) {
     return (
-      <Command className="fixed inset-0 z-50 w-full h-screen bg-white">
-        <div className="flex flex-col w-full h-screen bg-white text-black text-lg font-vremena tracking-[-0.01em]">
-          {/* Search Header */}
-          <div className="flex flex-row justify-between p-4 border-b-[0.25px] border-black/10">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search the shop"
+        className="search-overlay fixed inset-0 z-50 flex flex-col bg-white text-black font-vremena"
+      >
+        <Command
+          shouldFilter={false}
+          loop
+          label="Search products"
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="search-head">
             <Command.Input
-              placeholder="... SEARCH"
-              className="w-full text-xl outline-none bg-transparent"
+              placeholder="Search products or brands"
+              className="search-input"
               autoFocus
-              value={searchQuery}
-              onValueChange={setSearchQuery}
+              value={query}
+              onValueChange={setQuery}
             />
-            <button onClick={() => setIsOpen(false)}>
-              <Cross1Icon className="w-4 h-4 hover:cursor-pointer text-black/60 hover:text-black" />
+            <button
+              type="button"
+              onClick={close}
+              className="search-close"
+              aria-label="Close search"
+            >
+              <span className="search-esc" aria-hidden="true">
+                ESC
+              </span>
+              <Cross1Icon className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
 
-          {/* Search Content */}
-          <div className="flex flex-row flex-1 overflow-hidden">
-            {/* Left - Categories */}
-            <div className="w-[200px] min-w-[200px] border-r-[0.25px] border-black/10 overflow-y-auto overflow-x-hidden">
-              <div className="p-6 text-sm">
-                <div className="search-group space-y-2">
-                  <button
-                    className="search-item w-full text-left hover:opacity-60 transition-opacity"
-                    onClick={() => {
-                      setFilteredProducts(products);
-                      setSearchQuery("");
-                    }}
-                  >
-                    All Products
-                  </button>
-                  {collections.map((collection) => (
-                    <button
-                      key={collection.handle}
-                      className="search-item w-full text-left hover:opacity-60 transition-opacity break-words"
-                      onClick={() => handleCategoryClick(collection.handle)}
-                    >
-                      {collection.title}
-                    </button>
-                  ))}
+          <div className="search-body">
+            <nav className="search-rail" aria-label="Filter search">
+              {facets.designers.length > 0 && (
+                <div
+                  className="search-rail-group"
+                  role="group"
+                  aria-labelledby="sr-designers"
+                >
+                  <span id="sr-designers" className="search-rail-label">
+                    Designers
+                  </span>
+                  {facets.designers.map((d) =>
+                    railItem(
+                      d,
+                      filter.kind === "designer" && filter.value === d,
+                      () =>
+                        setFilter(
+                          filter.kind === "designer" && filter.value === d
+                            ? { kind: "all" }
+                            : { kind: "designer", value: d },
+                        ),
+                    ),
+                  )}
                 </div>
-              </div>
-            </div>
+              )}
+              {facets.categories.length > 0 && (
+                <div
+                  className="search-rail-group"
+                  role="group"
+                  aria-labelledby="sr-categories"
+                >
+                  <span id="sr-categories" className="search-rail-label">
+                    Categories
+                  </span>
+                  {facets.categories.map((c) =>
+                    railItem(
+                      c,
+                      filter.kind === "category" && filter.value === c,
+                      () =>
+                        setFilter(
+                          filter.kind === "category" && filter.value === c
+                            ? { kind: "all" }
+                            : { kind: "category", value: c },
+                        ),
+                    ),
+                  )}
+                </div>
+              )}
+            </nav>
 
-            {/* Right - Products */}
-            <div className="flex-1 overflow-y-auto">
-              <Command.List className="p-8">
-                <Command.Empty className="text-sm text-gray-500">
-                  No results found
-                </Command.Empty>
-                <Command.Group className="search-group grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-4">
-                  {filteredProducts.map((product) => (
-                    <Command.Item
-                      key={product.handle}
-                      value={product.title}
-                      className="search-item cursor-pointer hover:opacity-60 py-2 w-full transition-opacity"
-                      onSelect={() => {
-                        window.location.href = productPath(product);
-                      }}
-                    >
-                      <div className="flex justify-between items-start gap-4 w-full">
-                        <span className="flex-1 break-words">
-                          {product.title}
-                        </span>
-                        <span className="whitespace-nowrap flex-shrink-0">
-                          $
-                          {parseFloat(
-                            product.priceRange.minVariantPrice.amount,
-                          ).toFixed(0)}
-                        </span>
-                      </div>
-                    </Command.Item>
-                  ))}
-                </Command.Group>
+            <div
+              className="search-results"
+              tabIndex={0}
+              role="region"
+              aria-label="Search results"
+            >
+              <p className="search-count" aria-live="polite">
+                {products
+                  ? `${heading} · ${results.length}`
+                  : error
+                    ? "Search is unavailable right now. Please refresh and try again."
+                    : "Loading…"}
+              </p>
+              <Command.List className="search-list">
+                {products && (
+                  <Command.Empty className="search-empty">
+                    No pieces match. Try a brand name or a garment type.
+                  </Command.Empty>
+                )}
+                {results.map((p) => (
+                  <Command.Item
+                    key={p.id}
+                    value={p.id}
+                    keywords={[p.vendor, p.productType].filter(Boolean)}
+                    onSelect={() => {
+                      setIsOpen(false);
+                      router.push(productPath(p));
+                    }}
+                    className="search-row"
+                  >
+                    <span className="search-row-name">{p.title}</span>
+                    <span className="search-row-leader" aria-hidden="true" />
+                    <span className="search-row-price">
+                      {formatPrice(
+                        p.priceRange.minVariantPrice.amount,
+                        p.priceRange.minVariantPrice.currencyCode,
+                      )}
+                    </span>
+                  </Command.Item>
+                ))}
               </Command.List>
             </div>
           </div>
-        </div>
-      </Command>
+        </Command>
+      </div>
     );
   }
 
-  // Mobile Icon Button
   if (isMobile) {
     return (
       <button
+        ref={triggerRef}
+        type="button"
         onClick={() => setIsOpen(true)}
         className="flex items-center justify-center"
         aria-label="Open search"
+        aria-haspopup="dialog"
       >
-        <MagnifyingGlassIcon className="w-8 h-8" />
+        <MagnifyingGlassIcon className="h-8 w-8" aria-hidden="true" />
       </button>
     );
   }
 
-  // Desktop Text Button
   return (
     <button
+      ref={triggerRef}
+      type="button"
       onClick={() => setIsOpen(true)}
-      className="hover:opacity-60 transition-opacity"
+      aria-haspopup="dialog"
+      className="transition-opacity hover:opacity-60"
     >
       SEARCH
     </button>
@@ -209,6 +301,8 @@ export default function Search({ isMobile = false }: { isMobile?: boolean }) {
 
 export function SearchSkeleton() {
   return (
-    <button className="hover:opacity-60 transition-opacity">SEARCH</button>
+    <button type="button" className="transition-opacity hover:opacity-60">
+      SEARCH
+    </button>
   );
 }

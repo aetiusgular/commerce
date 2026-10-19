@@ -43,7 +43,30 @@ export const discountPercent = (
 
 /** Currency formatting used across cards and the PDP. */
 export const formatMoney = (money: Money, fractionDigits = 0): string =>
-  `${parseFloat(money.amount).toFixed(fractionDigits)} ${money.currencyCode}`;
+  `${formatAmount(money.amount, money.currencyCode, fractionDigits)} ${money.currencyCode}`;
+
+/**
+ * Number only, with thousands separators. Zero-decimal currencies (JPY, KRW)
+ * never show decimals, so 453000 KRW reads "453,000", not "453000.00".
+ */
+export const formatAmount = (
+  amount: string,
+  currencyCode: string,
+  fractionDigits = 2,
+): string => {
+  let digits = fractionDigits;
+  try {
+    const native = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currencyCode,
+    }).resolvedOptions().maximumFractionDigits;
+    digits = Math.min(fractionDigits, native ?? fractionDigits);
+  } catch {}
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(parseFloat(amount));
+};
 
 /**
  * Parses a label→value metafield (Measurements, Details, Materials). Accepts a

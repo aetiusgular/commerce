@@ -1,5 +1,5 @@
 import type { Product } from "lib/shopify/types";
-import { productPath } from "lib/utils";
+import { formatAmount, productPath } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -33,10 +33,12 @@ export function ShopCard({
   );
   const colorCount = colorOption?.values.length ?? 0;
   const productType = product.tags[0] || "Piece";
-  const price = parseFloat(product.priceRange.minVariantPrice.amount).toFixed(
+  const currency = product.priceRange.minVariantPrice.currencyCode;
+  const price = formatAmount(
+    product.priceRange.minVariantPrice.amount,
+    currency,
     0,
   );
-  const currency = product.priceRange.minVariantPrice.currencyCode;
 
   return (
     <article className="flex flex-col">

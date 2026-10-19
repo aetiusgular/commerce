@@ -26,44 +26,42 @@ export default async function Footer() {
               height={52}
               className="-mt-8 -ml-2.25"
             />
-            <ul className="space-y-2 text-sm">
-              <li>
-                <div className="flex flex-col gap-y-2">
-                  <div className="flex flex-row justify-between">
-                    <a
-                      href="#"
-                      className="block hover:text-black transition-colors"
-                    >
-                      California
-                    </a>
-                    <LiveClock locale="America/Los_Angeles" />
-                  </div>
-                  <div className="flex flex-row justify-between">
-                    <Suspense fallback={<div />}>
-                      <FooterCountry />
-                    </Suspense>
-                    <Link
-                      href="mailto:info@agmnt.space"
-                      className="hover:underline"
-                    >
-                      Contact
-                    </Link>
-                  </div>
-                </div>
-              </li>
-            </ul>
+            {/* Two lanes: labels/values on the left, clock and Contact on the
+                right. The country picker sits directly under its "Ship to"
+                label so the pair reads as one unit and never collides with
+                the right-hand lane. */}
+            <div className="flex flex-col gap-y-2 text-sm">
+              <div className="flex flex-row justify-between">
+                <span>California</span>
+                <LiveClock locale="America/Los_Angeles" />
+              </div>
+              <div className="flex flex-row justify-between">
+                <span id="ship-to-label" className="text-black/60">
+                  Ship to
+                </span>
+                <Link
+                  href="mailto:info@agmnt.space"
+                  className="hover:underline underline-offset-2"
+                >
+                  Contact
+                </Link>
+              </div>
+              <Suspense fallback={<div className="h-5" />}>
+                <FooterCountry />
+              </Suspense>
+            </div>
           </div>
 
           {/* Section 2 - Footer Menu (Privacy, Shipping, Terms) */}
           <div className="lg:col-span-1 space-y-4">
-            <h3 className="text-xl text-white mb-2">_____</h3>
+            <div aria-hidden="true" className="mb-2 h-7" />
             <FooterMenu menu={menu} />
           </div>
 
           {/* Section 3 - Social Links */}
           <div className="lg:col-span-1 space-y-4">
-            <h3 className="text-xl text-white mb-2">_____</h3>
-            <ul className="space-y-1 text-sm [&>li>a]:underline [&>li>a]:underline-offset-2 [&>li>a]:decoration-black/40 [&>li:hover>a]:decoration-black">
+            <div aria-hidden="true" className="mb-2 h-7" />
+            <ul className="space-y-2 text-sm [&>li>a]:underline [&>li>a]:underline-offset-2 [&>li>a]:decoration-black/40 [&>li:hover>a]:decoration-black">
               <li>
                 <a
                   href="https://www.instagram.com/agmntstore/"
@@ -100,7 +98,7 @@ export default async function Footer() {
           {/* Section 4 - Newsletter */}
           <div className="lg:col-span-2 space-y-4">
             <div>
-              <h3 className="text-xl text-white mb-2">_____</h3>
+              <div aria-hidden="true" className="mb-2 h-7" />
               <h3 className="text-sm text-black mb-2">Newsletter</h3>
               <Registration />
             </div>

@@ -1,13 +1,249 @@
-.search-group > div,
-.search-group > button {
+/* Search overlay. Matches the "Search — Even spacing" Paper page:
+   rail sized to its longest label (wraps, never clips), one product per row
+   across the full results pane: name · dotted leader · price. */
+
+.search-overlay {
+  overscroll-behavior: contain;
+}
+
+.search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+}
+@media (min-width: 768px) {
+  .search-head {
+    padding: 20px 32px;
+  }
+}
+
+.search-head {
+  transition-property: border-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+/* The input hides its own outline, so the header rule carries focus. */
+.search-head:has(.search-input:focus-visible) {
+  border-bottom-color: #000;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.02em;
+  outline: none;
+}
+@media (min-width: 768px) {
+  .search-input {
+    font-size: 24px;
+    line-height: 32px;
+  }
+}
+.search-input::placeholder {
+  color: rgb(0 0 0 / 0.6);
+}
+
+.search-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  color: #000;
+}
+.search-esc {
+  display: none;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: rgb(0 0 0 / 0.6);
+}
+@media (min-width: 768px) {
+  .search-esc {
+    display: inline;
+  }
+}
+
+.search-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+@media (min-width: 768px) {
+  .search-body {
+    flex-direction: row;
+  }
+}
+
+/* Rail: horizontal scrolling strip on phones, a left column from 768px. */
+.search-rail {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  min-height: 48px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border-bottom: 1px solid rgb(0 0 0 / 0.1);
+  scrollbar-width: none;
+}
+.search-rail::-webkit-scrollbar {
+  display: none;
+}
+.search-rail-group {
+  display: contents;
+}
+.search-rail-label {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .search-rail {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 28px;
+    width: clamp(232px, 20vw, 288px);
+    flex-shrink: 0;
+    padding: 32px 20px 32px 24px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-bottom: 0;
+    border-right: 1px solid rgb(0 0 0 / 0.1);
+  }
+  .search-rail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  /* Same type as the results heading so the two read as one line. */
+  .search-rail-label {
+    display: block;
+    padding-bottom: 6px;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(0 0 0 / 0.6);
+  }
+}
+@media (min-width: 1280px) {
+  .search-rail {
+    padding-left: 32px;
+    padding-right: 24px;
+  }
+}
+
+.search-rail-item {
+  flex-shrink: 0;
+  min-height: 24px;
+  padding: 6px 0;
+  text-align: left;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-underline-offset: 4px;
+  transition-property: opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+@media (min-width: 768px) {
+  .search-rail-item {
+    white-space: normal;
+  }
+}
+.search-rail-item.is-active {
+  text-decoration: underline;
+}
+@media (hover: hover) {
+  .search-rail-item:hover {
+    opacity: 0.6;
+  }
+}
+.search-rail-item:focus-visible,
+.search-close:focus-visible,
+.search-results:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 2px;
+}
+
+.search-results {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 20px 40px;
+}
+@media (min-width: 768px) {
+  .search-results {
+    padding: 32px 32px 48px;
+  }
+}
+@media (min-width: 1280px) {
+  .search-results {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+.search-count {
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(0 0 0 / 0.6);
+}
+
+.search-list [cmdk-list-sizer] {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-empty {
   font-size: 14px;
-  padding: calc(var(--spacing, 8px) * 0.5);
+  color: rgb(0 0 0 / 0.6);
 }
 
-[cmdk-item] {
-  padding-block: calc(var(--spacing, 8px) * 1);
-}
-
-[cmdk-item]:hover {
+.search-row {
+  display: flex;
   cursor: pointer;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 16px;
+  line-height: 22px;
+  letter-spacing: -0.02em;
+}
+.search-row-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.search-row-leader {
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 1px dotted rgb(0 0 0 / 0.35);
+  transform: translateY(-4px);
+}
+.search-row-price {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+/* Keyboard highlight from cmdk, plus pointer hover. */
+.search-row[data-selected="true"] .search-row-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.search-row[data-selected="true"] .search-row-leader {
+  border-bottom-color: #000;
 }

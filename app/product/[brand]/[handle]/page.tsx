@@ -5,7 +5,7 @@ import { ProductGallery } from "components/product/product-gallery";
 import { ProductPanel } from "components/product/product-panel";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
-import { baseUrl, productPath, slugify } from "lib/utils";
+import { baseUrl, productPath, slugify, formatAmount } from "lib/utils";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
@@ -212,7 +212,11 @@ async function RelatedProducts({ id }: { id: string }) {
               {p.vendor} <em>— {p.title}</em>
             </div>
             <div className="pdp-rec-price agmnt-tnum">
-              {parseFloat(p.priceRange.minVariantPrice.amount).toFixed(0)}{" "}
+              {formatAmount(
+                p.priceRange.minVariantPrice.amount,
+                p.priceRange.minVariantPrice.currencyCode,
+                0,
+              )}{" "}
               {p.priceRange.minVariantPrice.currencyCode}
             </div>
           </a>

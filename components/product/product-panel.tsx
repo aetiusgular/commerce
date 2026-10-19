@@ -7,6 +7,7 @@ import type { Product, ProductVariant } from "lib/shopify/types";
 import {
   colorHex,
   discountPercent,
+  formatAmount,
   isOnSale,
   marketNotes,
   parseKeyValues,
@@ -318,16 +319,18 @@ export function ProductPanel({
           {onSale && compareAt ? (
             <div className="price">
               <span className="was">
-                {parseFloat(compareAt.amount).toFixed(2)}
+                {formatAmount(compareAt.amount, compareAt.currencyCode)}
               </span>
-              <span className="now">{parseFloat(price.amount).toFixed(2)}</span>
+              <span className="now">
+                {formatAmount(price.amount, price.currencyCode)}
+              </span>
               <span className="ccy">
                 {price.currencyCode} · −{percentOff}%
               </span>
             </div>
           ) : (
             <div className="price">
-              {parseFloat(price.amount).toFixed(2)}
+              {formatAmount(price.amount, price.currencyCode)}
               <span className="ccy">{price.currencyCode}</span>
             </div>
           )}

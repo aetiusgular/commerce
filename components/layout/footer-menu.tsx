@@ -30,7 +30,7 @@ export default function FooterMenu({ menu }: { menu: Menu[] }) {
 
   return (
     <nav>
-      <ul className="space-y-1 text-sm">
+      <ul className="space-y-2 text-sm">
         {menu.map((item: Menu) => {
           return <FooterMenuItem key={item.title} item={item} />;
         })}
