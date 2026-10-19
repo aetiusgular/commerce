@@ -3960,7 +3960,40 @@ video::-webkit-media-controls-play-button {
   font-weight: 500;
 }
 
-@media (max-width: 900px) {
+/* Tablet (641-900px): keep the desktop split layout (Shop and Installations
+   by the logo, Search and Cart right). Row matches the 52px mobile bar so the
+   shop filter bar still docks flush, and every link gets a 44px target. */
+@media (min-width: 641px) and (max-width: 900px) {
+  .nv--v2 .nv-row {
+    height: 52px;
+    gap: 18px;
+    padding: 0 20px;
+  }
+  .nv--v2 .nv-logo {
+    min-height: 44px;
+  }
+  .nv--v2 .nv-links,
+  .nv--v2 .nv-util {
+    gap: 4px;
+  }
+  .nv--v2 .nv-links a,
+  .nv--v2 .nv-util a,
+  .nv--v2 .nv-util button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 8px;
+  }
+  .nv--v2 .nv-links {
+    margin-left: -8px;
+  }
+  .nv--v2 .nv-util {
+    margin-right: -8px;
+  }
+}
+@media (max-width: 640px) {
   .nv .nv-desk {
     display: none !important;
   }

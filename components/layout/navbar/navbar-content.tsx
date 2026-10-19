@@ -22,7 +22,7 @@ const ALL_LINKS: NavLink[] = [
 const LINKS = ALL_LINKS.filter((l) => !l.hidden);
 
 /**
- * Navbar — v6 "Left lockup" desktop, and a one-row mobile bar (≤900px):
+ * Navbar — v6 "Left lockup" desktop, and a one-row mobile bar (≤640px):
  * logo · divider · Shop · Installations · Search · Cart. No menu drawer:
  * every destination is one tap away. Each mobile button is a 44×44px
  * minimum target (WCAG 2.5.5 AAA).
