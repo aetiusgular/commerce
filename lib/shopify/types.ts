@@ -171,6 +171,41 @@ export type ShopifyProduct = {
   updatedAt: string;
 };
 
+/** Product shape for the Google Merchant Center feed (queries/feed.ts). */
+export type FeedProduct = {
+  id: string;
+  handle: string;
+  title: string;
+  description: string;
+  vendor: string;
+  tags: string[];
+  category: { name: string; ancestors: { name: string }[] } | null;
+  images: { nodes: { url: string }[] };
+  variants: {
+    nodes: {
+      id: string;
+      availableForSale: boolean;
+      selectedOptions: { name: string; value: string }[];
+      price: Money;
+      compareAtPrice: Money | null;
+      image: { url: string } | null;
+    }[];
+  };
+};
+
+export type ShopifyFeedProductsOperation = {
+  data: {
+    products: {
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      nodes: FeedProduct[];
+    };
+  };
+  variables: {
+    cursor: string | null;
+    country: string;
+  };
+};
+
 export type ShopifyCartOperation = {
   data: {
     cart: ShopifyCart;

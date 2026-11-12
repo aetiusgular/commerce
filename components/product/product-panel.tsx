@@ -11,7 +11,7 @@ import {
   isOnSale,
   parseKeyValues,
 } from "lib/utils";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 const lc = (s: string) => s.trim().toLowerCase();
 
@@ -214,6 +214,11 @@ export function ProductPanel({
 
   const [color, setColor] = useState(colorOption?.values[0] ?? "");
   const [size, setSize] = useState("");
+  // Preselect the size from ?size= (Google Shopping variant links land here).
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("size");
+    if (fromUrl && sizeOption?.values.includes(fromUrl)) setSize(fromUrl);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [open, setOpen] = useState(false);
   const [added, setAdded] = useState(false);
   const [unit, setUnit] = useState<"cm" | "in">("cm");
