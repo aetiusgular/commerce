@@ -31,6 +31,7 @@ import {
   getCollectionQuery,
   getCollectionsQuery,
 } from "./queries/collection";
+import { FEED_API_VERSION, getFeedProductsQuery } from "./queries/feed";
 import { getMenuQuery } from "./queries/menu";
 import { getPageQuery, getPagesQuery } from "./queries/page";
 import {
@@ -49,6 +50,7 @@ import {
   Cart,
   Collection,
   Connection,
+  FeedProduct,
   Image,
   Menu,
   Page,
@@ -65,6 +67,7 @@ import {
   ShopifyCollectionProductsOperation,
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
+  ShopifyFeedProductsOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
   ShopifyPagesOperation,
@@ -92,17 +95,24 @@ export async function shopifyFetch<T>({
   headers,
   query,
   variables,
+  apiVersion,
 }: {
   headers?: HeadersInit;
   query: string;
   variables?: ExtractVariables<T>;
+  /** Override the Storefront API version for this one request. */
+  apiVersion?: string;
 }): Promise<{ status: number; body: T } | never> {
   try {
     if (!endpoint) {
       throw new Error("SHOPIFY_STORE_DOMAIN environment variable is not set");
     }
 
-    const result = await fetch(endpoint, {
+    const url = apiVersion
+      ? `${domain}/api/${apiVersion}/graphql.json`
+      : endpoint;
+
+    const result = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -553,6 +563,37 @@ export async function getProducts({
   });
 
   return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+}
+
+/**
+ * Every product published to the headless channel, in base USD, for the
+ * Google Merchant Center feed. Hidden-tagged products are dropped.
+ */
+export async function getFeedProducts(): Promise<FeedProduct[]> {
+  "use cache";
+  cacheTag(TAGS.products);
+  cacheLife("hours");
+
+  if (!endpoint) return [];
+
+  const products: FeedProduct[] = [];
+  let cursor: string | null = null;
+
+  do {
+    const res: { body: ShopifyFeedProductsOperation } =
+      await shopifyFetch<ShopifyFeedProductsOperation>({
+        query: getFeedProductsQuery,
+        apiVersion: FEED_API_VERSION,
+        variables: { cursor, country: DEFAULT_COUNTRY },
+      });
+    const page = res.body.data.products;
+    products.push(
+      ...page.nodes.filter((p) => !p.tags.includes(HIDDEN_PRODUCT_TAG)),
+    );
+    cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (cursor);
+
+  return products;
 }
 
 // This is called from `app/api/revalidate.ts` so providers can control revalidation logic.
