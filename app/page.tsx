@@ -6,13 +6,29 @@ import { ShopSection } from "components/home/shop-section";
 import { ThisWeek } from "components/home/this-week";
 import Footer from "components/layout/footer";
 // import Script from "next/script";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 export const revalidate = 3600;
 
+export const metadata: Metadata = {
+  title: {
+    absolute: "AGMNT | Avant-Garde & Korean Designer Clothing",
+  },
+  description:
+    "AGMNT stocks avant-garde and Korean designer clothing: XLIM, AESYNCTX, Post Archive Faction, Aenrmous, AVAVAV, Kozaburo sashiko denim and 11 by BBS x Salomon. Ships worldwide.",
+  alternates: { canonical: "/" },
+};
+
 export default async function Page() {
   return (
     <>
+      {/* The page's one H1. The featured article headline below is an H2 so
+          the homepage reads as the store, not as that article. */}
+      <h1 className="sr-only">
+        AGMNT: avant-garde, Korean and Japanese designer clothing
+      </h1>
+
       {/* Brand preloader — masks first-load latency, runs once per session. */}
       <Preloader />
 

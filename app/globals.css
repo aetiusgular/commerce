@@ -4227,7 +4227,8 @@ video::-webkit-media-controls-play-button {
 .agmnt-home .feed-kick .c {
   color: var(--ink);
 }
-.agmnt-home .feed-txt h1 {
+.agmnt-home .feed-txt h1,
+.agmnt-home .feed-txt h2 {
   margin-top: 20px;
   font-size: clamp(22px, 2.05vw, 33px);
   line-height: 1.08;

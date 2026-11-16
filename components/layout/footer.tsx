@@ -56,6 +56,28 @@ export default async function Footer() {
           <div className="lg:col-span-1 space-y-4">
             <div aria-hidden="true" className="mb-2 h-7" />
             <FooterMenu menu={menu} />
+            {/* Crawlable links to the curated landing pages (Shopify smart
+                collections), so every page passes them internal link weight. */}
+            <nav aria-label="Shop by scene">
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link
+                    href="/shop/korean-designers"
+                    className="block hover:text-black transition-colors hover:underline hover:decoration-dashed underline-offset-2"
+                  >
+                    Korean Designers
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/shop/avant-garde"
+                    className="block hover:text-black transition-colors hover:underline hover:decoration-dashed underline-offset-2"
+                  >
+                    Avant-Garde
+                  </Link>
+                </li>
+              </ul>
+            </nav>
           </div>
 
           {/* Section 3 - Social Links */}

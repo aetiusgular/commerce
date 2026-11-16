@@ -38,9 +38,10 @@ export const metadata = {
     default: SITE_NAME!,
     template: `%s | ${SITE_NAME}`,
   },
-  alternates: {
-    canonical: "/",
-  },
+  // No site-wide canonical here: a canonical set in the root layout is
+  // inherited by every route that doesn't set its own, which told Google that
+  // editorial articles and policy pages were duplicates of the homepage. Each
+  // route declares its own canonical instead.
   robots: {
     follow: true,
     index: true,
@@ -85,7 +86,9 @@ export default async function RootLayout({
     },
     sameAs: [
       process.env.NEXT_PUBLIC_WIKIDATA_URL,
-      "https://www.instagram.com/agmnt_store/",
+      "https://www.instagram.com/agmntstore/",
+      "https://www.tiktok.com/@agmnt_store",
+      "https://www.youtube.com/@agmnt_store",
       "https://www.facebook.com/p/AGMNT-Store-61567711654132/",
       "https://www.linkedin.com/company/agmnt-store",
     ].filter(Boolean),

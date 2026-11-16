@@ -2,6 +2,7 @@ import { getCountry } from "lib/localization";
 import { ShopBrowser } from "components/shop/shop-browser";
 import { getCollection, getCollectionProducts } from "lib/shopify";
 import { computeFacets, initialFromParams } from "lib/shop-facets";
+import { baseUrl, productPath } from "lib/utils";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -9,21 +10,30 @@ export async function generateMetadata(props: {
   params: Promise<{ collection: string }>;
 }): Promise<Metadata> {
   const params = await props.params;
-  const collection = await getCollection(params.collection);
+  const [collection, products] = await Promise.all([
+    getCollection(params.collection),
+    getCollectionProducts({ collection: params.collection }),
+  ]);
 
   if (!collection) return notFound();
+
+  // An empty collection (e.g. an archive brand with nothing listed) is a thin
+  // page that says "No products found". Keep it out of the index until it has
+  // stock; links on it are still followed.
+  const empty = products.length === 0;
 
   return {
     title: collection.seo?.title || collection.title,
     description:
       collection.seo?.description ||
       collection.description ||
-      `Shop ${collection.title} in stock at AGMNT — official stockist, ships from Los Angeles.`,
+      `Shop ${collection.title} at AGMNT. Ships worldwide.`,
     alternates: {
       // Canonical is always the bare collection path, so filtered param
       // variants (?vendor=&color=…) never register as duplicate URLs.
       canonical: `/shop/${params.collection}`,
     },
+    ...(empty ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -58,8 +68,51 @@ export default async function CategoryPage(props: {
     brandNotes[raw.designers[0]] = collection.description.trim();
   }
 
+  const url = `${baseUrl}/shop/${params.collection}`;
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: baseUrl },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Shop",
+          item: `${baseUrl}/shop`,
+        },
+        { "@type": "ListItem", position: 3, name: title, item: url },
+      ],
+    },
+    ...(products.length
+      ? [
+          {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            name: collection?.seo?.title || title,
+            description: collection?.description || undefined,
+            url,
+            mainEntity: {
+              "@type": "ItemList",
+              numberOfItems: products.length,
+              itemListElement: products.map((p, i) => ({
+                "@type": "ListItem",
+                position: i + 1,
+                url: `${baseUrl}${productPath(p)}`,
+                name: p.vendor ? `${p.vendor} ${p.title}` : p.title,
+              })),
+            },
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav className="shop-crumb">
         <a href="/">Home</a>
         <span className="sep">/</span>
@@ -81,9 +134,7 @@ export default async function CategoryPage(props: {
         >
           {collection.description
             ? collection.description
-            : isBrand
-              ? `Official stockist of ${collection.title}. In stock and shipped from our Los Angeles studio.`
-              : `Shop ${collection.title} in stock at AGMNT — official stockist, shipped from Los Angeles.`}
+            : `Shop ${collection.title} at AGMNT. Ships worldwide.`}
         </p>
       )}
 

@@ -15,6 +15,7 @@ export async function generateMetadata(props: {
   return {
     title: page.seo?.title || page.title,
     description: page.seo?.description || page.bodySummary,
+    alternates: { canonical: `/${params.page}` },
     openGraph: {
       publishedTime: page.createdAt,
       modifiedTime: page.updatedAt,

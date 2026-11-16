@@ -111,9 +111,9 @@ export function WeekFeed({ items }: { items: WeekItem[] }) {
               </>
             )}
           </div>
-          <h1>
+          <h2>
             <Link href={it.href}>{it.title}</Link>
-          </h1>
+          </h2>
           {it.dek && <p className="feed-dek">{it.dek}</p>}
           <div className="feed-foot">
             <span className="feed-by">

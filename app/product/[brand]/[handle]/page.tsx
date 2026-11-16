@@ -5,6 +5,7 @@ import { ProductGallery } from "components/product/product-gallery";
 import { ProductPanel } from "components/product/product-panel";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
+import { BRANDS } from "lib/brands";
 import { baseUrl, productPath, slugify, formatAmount } from "lib/utils";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -32,7 +33,7 @@ export async function generateMetadata(props: {
     description:
       product.seo.description ||
       product.description ||
-      `${product.title}${product.vendor ? ` by ${product.vendor}` : ""} — in stock at AGMNT. Ships from Los Angeles.`,
+      `${product.title}${product.vendor ? ` by ${product.vendor}` : ""} at AGMNT. Ships worldwide.`,
     alternates: {
       // Always the branded path, so the canonical never depends on which
       // brand segment the visitor arrived through.
@@ -102,16 +103,31 @@ export default async function ProductPage(props: {
     seller: { "@type": "Organization", name: "AGMNT" },
   };
 
+  // Brand page = the vendor's collection (handles are the slugified vendor).
+  const brandSlug = product.vendor ? slugify(product.vendor) : "";
+  const brandAliases = product.vendor
+    ? BRANDS[product.vendor]?.aliases
+    : undefined;
+
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.title,
+    // The search-intent name (brand, model, colour) set in Shopify SEO.
+    name:
+      product.seo.title ||
+      (product.vendor ? `${product.vendor} ${product.title}` : product.title),
     description: product.description,
     image: product.images?.length
       ? product.images.map((img) => img.url)
       : product.featuredImage?.url,
     ...(product.vendor
-      ? { brand: { "@type": "Brand", name: product.vendor } }
+      ? {
+          brand: {
+            "@type": "Brand",
+            name: product.vendor,
+            ...(brandAliases?.length ? { alternateName: brandAliases } : {}),
+          },
+        }
       : {}),
     offers:
       low === high
@@ -133,6 +149,39 @@ export default async function ProductPage(props: {
           __html: JSON.stringify(productJsonLd),
         }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              {
+                "@type": "ListItem",
+                position: 1,
+                name: "Shop",
+                item: `${baseUrl}/shop`,
+              },
+              ...(brandSlug
+                ? [
+                    {
+                      "@type": "ListItem",
+                      position: 2,
+                      name: product.vendor,
+                      item: `${baseUrl}/shop/${brandSlug}`,
+                    },
+                  ]
+                : []),
+              {
+                "@type": "ListItem",
+                position: brandSlug ? 3 : 2,
+                name: product.title,
+                item: canonicalUrl,
+              },
+            ],
+          }),
+        }}
+      />
       <ProductViewTracker
         id={product.id}
         title={product.title}
@@ -142,6 +191,12 @@ export default async function ProductPage(props: {
       <div className="agmnt-pdp flex min-h-screen w-full flex-col">
         <nav className="pdp-crumb">
           <a href="/shop">Shop</a>
+          {brandSlug && (
+            <>
+              <span className="sep">/</span>
+              <a href={`/shop/${brandSlug}`}>{product.vendor}</a>
+            </>
+          )}
           {product.productType && (
             <>
               <span className="sep">/</span>

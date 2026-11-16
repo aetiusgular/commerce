@@ -17,6 +17,7 @@ export async function generateMetadata(props: {
   return {
     title: article.title,
     description: article.excerpt || undefined,
+    alternates: { canonical: `/installations/${handle}` },
     openGraph: article.image
       ? {
           images: [

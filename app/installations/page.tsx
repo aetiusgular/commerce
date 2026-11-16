@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Editorial",
   description:
     "AGMNT editorial journal — interviews, essays, and installations.",
+  alternates: { canonical: "/installations" },
 };
 
 export default async function InstallationsPage() {

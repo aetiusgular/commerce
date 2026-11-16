@@ -11,10 +11,13 @@ export type BrandInfo = {
   est?: string;
   city?: string;
   note?: string;
+  /** Other names buyers search for the brand (Product JSON-LD alternateName). */
+  aliases?: string[];
 };
 
 export const BRANDS: Record<string, BrandInfo> = {
   "Post Archive Faction (PAF)": {
+    aliases: ["PAF", "Post Archive Faction"],
     est: "2018",
     city: "Seoul, South Korea",
     note: `Post Archive Faction (PAF) is a Seoul based label founded in 2018 by Dongjoon Lim and Sookyo Jeong. Drawing on backgrounds in industrial and spatial design, the duo build deconstructed, futuristic menswear defined by deep archival research and a concept driven approach. PAF organizes its collections into distinct lines that range from wearable to highly experimental.`,
@@ -29,11 +32,13 @@ export const BRANDS: Record<string, BrandInfo> = {
     note: `AVAVAV is an experimental fashion house based in Florence, Italy, led by creative director Beate Karlsson. Known for irreverent, theatrical runway concepts that blur fashion and performance, the independent label channels humour and provocation while working extensively with deadstock materials. Its viral shows have made it a fixture of contemporary avant-garde conversation.`,
   },
   "11 by Boris Bidjan Saberi": {
+    aliases: ["11 by BBS", "11 BBS", "Boris Bidjan Saberi 11"],
     est: "2013",
     city: "Barcelona, Spain",
     note: `11 by Boris Bidjan Saberi is the diffusion line of Barcelona based, German designer Boris Bidjan Saberi, launched in 2013 and named for his fascination with numerology and his date of birth. It translates the main line's avant-garde sensibility into a more wearable register, pairing skate and streetwear influences with technical fabrics and everyday staples.`,
   },
   Xlim: {
+    aliases: ["XLIM"],
     est: "2021",
     city: "Seoul, South Korea",
     note: `Xlim, stylized XLIM, is a Seoul based avant-garde label founded in 2021 by Dohee Kim, the stylist known for shaping the look of Korean R&B artist DEAN. Operating as a multidisciplinary collective, XLIM releases its collections as cinematic "Episodes" rather than seasons, applying film inspired narrative to washed, sport tinged tailoring. The result is a distinctly Korean take on elevated streetwear built on continuous reinvention.`,
@@ -44,6 +49,7 @@ export const BRANDS: Record<string, BrandInfo> = {
     note: `Aenrmous, stylized aenrmous, is a Hong Kong label founded in 2021 that keeps its designers deliberately anonymous. Working in an artisanal, conceptual register, it treats detail as equally important as material and tailoring. Detachable modular elements, structural pleats, asymmetric drapes, and layered silhouettes translate avant-garde runway ideas into functional everyday form.`,
   },
   Aesynctx: {
+    aliases: ["AESYNCTX", "ÆSYNCTX"],
     est: "2022",
     city: "Seoul, South Korea",
     note: `Aesynctx, stylized AESYNCTX, is a Seoul based avant-garde label founded in 2022 by designer Heewon Park. The brand reworks obsolete design codes through an experimental, future facing lens, pairing utilitarian construction with cyber inspired detail. Washed, distressed finishes and transformable, function driven pieces define its dystopian nostalgic aesthetic.`,
@@ -52,6 +58,7 @@ export const BRANDS: Record<string, BrandInfo> = {
     note: `Veerkracht is an independent, unisex streetwear label whose name is the Dutch word for resilience. It is known for utilitarian, modular design, including its signature zip and velcro biker pants, and is carried by avant-garde stockists across Asia.`,
   },
   Notinlist: {
+    aliases: ["NOTINLIST"],
     est: "2020",
     city: "Kuala Lumpur, Malaysia",
     note: `Notinlist, stylized NOTINLIST, is a conceptual techwear label based in Kuala Lumpur, Malaysia, founded in 2020 by designer Xavier OU, who works under the alias XV-O. Blending fashion with science fiction storytelling, the brand structures its output as "Levels," beginning with the LV.0 line, rather than conventional seasons. Its garments draw on video game interfaces, mecha anime, and futuristic lore through technical, function driven construction.`,

@@ -5,6 +5,7 @@ import { getCountry } from "lib/localization";
 export const metadata = {
   title: "Cart",
   description: "Your AGMNT cart.",
+  robots: { index: false, follow: true },
 };
 
 export default async function CartPage() {

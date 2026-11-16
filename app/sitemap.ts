@@ -1,5 +1,6 @@
 import {
   getArticles,
+  getCollectionProducts,
   getCollections,
   getPages,
   getProducts,
@@ -22,12 +23,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date().toISOString(),
   }));
 
-  const collectionsPromise = getCollections().then((collections) =>
-    collections.map((collection) => ({
-      url: `${baseUrl}${collection.path}`,
-      lastModified: collection.updatedAt,
-    })),
-  );
+  // Skip the synthetic "All" collection (it is /shop, listed below) and any
+  // collection with no products: those pages are noindexed, and a sitemap
+  // should only list pages we want indexed.
+  const collectionsPromise = getCollections().then(async (collections) => {
+    const real = collections.filter((c) => c.handle !== "");
+    const counts = await Promise.all(
+      real.map((c) =>
+        getCollectionProducts({ collection: c.handle }).then((p) => p.length),
+      ),
+    );
+    return real
+      .filter((_, i) => (counts[i] ?? 0) > 0)
+      .map((collection) => ({
+        url: `${baseUrl}${collection.path}`,
+        lastModified: collection.updatedAt,
+      }));
+  });
 
   const productsPromise = getProducts({}).then((products) =>
     products.map((product) => ({
