@@ -80,7 +80,7 @@ export default async function RootLayout({
     logo: `${baseUrl}/images/AGMNT-logo-black.png`,
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Los Angeles",
+      addressLocality: "Dublin",
       addressRegion: "CA",
       addressCountry: "US",
     },
